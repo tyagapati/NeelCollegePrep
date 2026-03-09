@@ -4,66 +4,129 @@
 <div class="page-header">
   <div>
     <div class="eyebrow">Weekly check-in</div>
-    <h1 class="section-title" style="margin-top:14px;">Capture the wins while they are still fresh.</h1>
-    <div class="section-sub">{{ cur_week }} · Mark what shipped, note what slipped, and save detail you can reuse later in essays and applications.</div>
+    <h1 class="section-title" style="margin-top:14px;">Your weekly focus plan.</h1>
+    <div class="section-sub">{{ cur_week }} · New focus areas reset every Sunday morning. Finish what matters most, then log it once.</div>
+  </div>
+</div>
+
+<div class="hero-card">
+  <div class="grid-2">
+    <div>
+      <div class="eyebrow" style="margin-bottom:12px;">This week starts {{ reset_label }}</div>
+      <h2 class="section-title" style="max-width:520px;">The app picked these focus areas because they need the most attention right now.</h2>
+      <div class="section-sub">Complete a task and save your check-in. Your weekly progress updates automatically, and some tasks also bump metrics directly.</div>
+    </div>
+    <div class="surface-note" style="align-self:start;">
+      <strong style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;">Focus areas</strong>
+      <div class="stack-sm" style="margin-top:10px;">
+        {% for pillar in weekly_plan.focus_pillars %}
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <span class="pillar-tag" style="background:{{ pillar.color }}12;color:{{ pillar.color }};">{{ pillar.icon }} {{ pillar.label }}</span>
+          <span style="font-size:12px;color:var(--muted);">{{ pillar.reason }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
   </div>
 </div>
 
 {% if has_existing %}
 <div class="card" style="background:#f0fdf4;border-color:rgba(16,185,129,0.14);">
   <div class="eyebrow" style="background:rgba(16,185,129,0.12);color:#047857;border-color:transparent;">Already logged</div>
-  <div style="font-size:14px;color:#065f46;margin-top:10px;">You already saved this week. Any edits here will update the current entry.</div>
+  <div style="font-size:13px;color:#065f46;margin-top:10px;">You already saved this week. Editing below updates the same weekly entry.</div>
 </div>
 {% endif %}
 
-{% for p in pillars %}
 <div class="card">
-  <div class="collapsible-header" onclick="toggleSection('sect-{{ p.id }}', this)">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
     <div>
-      <div class="eyebrow" style="background:{{ p.color }}12;color:{{ p.color }};border-color:transparent;margin-bottom:10px;">{{ p.icon }} {{ p.label }}</div>
-      <h3 style="margin:0;font-size:20px;font-weight:700;letter-spacing:-0.02em;">{{ p.label }}</h3>
+      <div class="eyebrow" style="margin-bottom:10px;">Focus tasks</div>
+      <h3 style="margin:0;font-size:20px;font-weight:700;letter-spacing:-0.02em;">This week&apos;s plan</h3>
     </div>
-    <span class="chevron" style="font-size:18px;transition:transform 0.2s;">▾</span>
+    <div class="badge" style="background:rgba(109,40,217,0.08);color:var(--blue);">{{ focus_tasks|length }} tasks</div>
   </div>
-  <div id="sect-{{ p.id }}" class="section-body" style="margin-top:16px;">
-    {% for t in tasks[p.id] %}
-    <div class="task-item" id="task-{{ p.id }}-{{ loop.index0 }}" data-pillar="{{ p.id }}" data-label="{{ t.label }}">
+  <div class="stack-sm">
+    {% for t in focus_tasks %}
+    <div class="task-item weekly-task-item" id="task-{{ loop.index0 }}" data-task-id="{{ t.task_id }}" data-pillar="{{ t.pillar }}" data-label="{{ t.label }}">
       <div class="task-label">
-        {{ t.label }}
-        {% if t.custom %}<span class="badge" style="background:#e0e7ff;color:#3730a3;">custom</span>{% endif %}
+        <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap;">
+          <div>
+            <span class="pillar-tag" style="background:{{ t.pillar_color }}12;color:{{ t.pillar_color }};margin-bottom:8px;">{{ t.pillar_icon }} {{ t.pillar_label }}</span>
+            <div style="font-size:15px;font-weight:600;color:var(--text);margin-top:8px;">{{ t.label }}</div>
+          </div>
+          {% if t.effect_text %}
+          <span class="badge" style="background:#ecfdf5;color:#047857;">Auto-updates: {{ t.effect_text }}</span>
+          {% endif %}
+        </div>
       </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">{{ t.why }}</div>
       <div class="task-actions">
         <button class="btn btn-sm {% if t.status == 'done' %}btn-done{% endif %}"
-                onclick="setStatus(this, '{{ p.id }}', {{ loop.index0 }}, 'done')">Done</button>
+                onclick="setStatus(this, '{{ t.task_id }}', 'done')">Done</button>
         <button class="btn btn-sm {% if t.status == 'skipped' %}btn-skip{% endif %}"
-                onclick="setStatus(this, '{{ p.id }}', {{ loop.index0 }}, 'skipped')">Skipped</button>
-        <input type="text" placeholder="Quick note for your essay bank..."
+                onclick="setStatus(this, '{{ t.task_id }}', 'skipped')">Not this week</button>
+        <input type="text" placeholder="Quick note for future essays or reminders..."
                value="{{ t.note }}" class="task-note"
                style="flex:1;min-width:220px;"
-               data-pillar="{{ p.id }}" data-idx="{{ loop.index0 }}">
+               data-task-id="{{ t.task_id }}">
       </div>
     </div>
     {% endfor %}
-    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
-      <input type="text" placeholder="Add a custom task..." id="custom-{{ p.id }}" style="flex:1;min-width:220px;">
-      <button class="btn btn-sm" onclick="addCustom('{{ p.id }}')">Add task</button>
-    </div>
   </div>
 </div>
-{% endfor %}
+
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+    <div>
+      <div class="eyebrow" style="margin-bottom:10px;">Extra tasks</div>
+      <h3 style="margin:0;font-size:18px;font-weight:700;letter-spacing:-0.02em;">Optional custom tasks</h3>
+    </div>
+  </div>
+  {% if custom_tasks %}
+  <div class="stack-sm" style="margin-bottom:12px;">
+    {% for t in custom_tasks %}
+    <div class="task-item weekly-task-item" data-task-id="{{ t.task_id }}" data-pillar="{{ t.pillar }}" data-label="{{ t.label }}">
+      <div class="task-label">
+        <span class="pillar-tag" style="background:{{ t.pillar_color }}12;color:{{ t.pillar_color }};">{{ t.pillar_icon }} {{ t.pillar_label }}</span>
+        <div style="font-size:14px;font-weight:600;color:var(--text);margin-top:8px;">{{ t.label }}</div>
+      </div>
+      <div class="task-actions">
+        <button class="btn btn-sm {% if t.status == 'done' %}btn-done{% endif %}"
+                onclick="setStatus(this, '{{ t.task_id }}', 'done')">Done</button>
+        <button class="btn btn-sm {% if t.status == 'skipped' %}btn-skip{% endif %}"
+                onclick="setStatus(this, '{{ t.task_id }}', 'skipped')">Not this week</button>
+        <input type="text" placeholder="Quick note..."
+               value="{{ t.note }}" class="task-note"
+               style="flex:1;min-width:220px;"
+               data-task-id="{{ t.task_id }}">
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  <div class="grid-2">
+    {% for pillar in weekly_plan.focus_pillars %}
+    <div style="display:flex;gap:8px;align-items:center;">
+      <span class="pillar-tag" style="background:{{ pillar.color }}12;color:{{ pillar.color }};">{{ pillar.icon }} {{ pillar.label }}</span>
+      <input type="text" placeholder="Add a custom task for {{ pillar.label }}..." id="custom-{{ pillar.id }}">
+      <button class="btn btn-sm" onclick="addCustom('{{ pillar.id }}')">Add</button>
+    </div>
+    {% endfor %}
+  </div>
+</div>
 
 <div class="grid-2">
   <div class="card">
     <div class="eyebrow" style="margin-bottom:12px;">Weekly reflection</div>
     <h3 style="font-size:20px;font-weight:700;letter-spacing:-0.02em;">What mattered most this week?</h3>
     <div style="font-size:13px;color:var(--muted);margin:8px 0 12px;">What felt strong, what felt stuck, and what deserves focus next week?</div>
-    <textarea id="reflection" placeholder="This week I..." rows="4"></textarea>
+    <textarea id="reflection" placeholder="This week I..." rows="4">{{ reflection }}</textarea>
   </div>
   <div class="card" style="background:linear-gradient(135deg, rgba(22,82,240,0.08), rgba(255,255,255,0.92));">
-    <div class="eyebrow" style="margin-bottom:12px;">Why this matters</div>
-    <h3 style="font-size:20px;font-weight:700;letter-spacing:-0.02em;">This is raw material for future essays.</h3>
-    <div class="section-sub" style="margin:8px 0 18px;">Specific examples, numbers, and reflection are much more valuable than vague memory six months from now.</div>
-    <button class="btn btn-primary" onclick="saveWeekly()">Save weekly check-in</button>
+    <div class="eyebrow" style="margin-bottom:12px;">Progress rule</div>
+    <h3 style="font-size:20px;font-weight:700;letter-spacing:-0.02em;">Done tasks now count.</h3>
+    <div class="section-sub" style="margin:8px 0 18px;">Saved completions improve weekly progress automatically, and highlighted tasks also update linked metrics.</div>
+    <button class="btn btn-primary" onclick="saveWeekly()">Save this week</button>
   </div>
 </div>
 
@@ -95,15 +158,8 @@
 <script>
   const taskStates = {};
 
-  function toggleSection(id, el) {
-    const s = document.getElementById(id);
-    const c = el.querySelector('.chevron');
-    if (s.style.display === 'none') { s.style.display = 'block'; c.style.transform = 'rotate(0)'; }
-    else { s.style.display = 'none'; c.style.transform = 'rotate(-90deg)'; }
-  }
-
-  function setStatus(btn, pillar, idx, status) {
-    const key = pillar + '-' + idx;
+  function setStatus(btn, taskId, status) {
+    const key = taskId;
     const current = taskStates[key];
     if (current === status) { taskStates[key] = 'pending'; btn.className = 'btn btn-sm'; return; }
     taskStates[key] = status;
@@ -124,13 +180,14 @@
 
   async function saveWeekly() {
     const tasks = [];
-    document.querySelectorAll('.task-item').forEach(el => {
+    document.querySelectorAll('.weekly-task-item').forEach(el => {
+      const taskId = el.dataset.taskId;
       const pillar = el.dataset.pillar;
       const label = el.dataset.label;
-      const idx = el.id.split('-').pop();
-      const key = pillar + '-' + idx;
+      const key = taskId;
       const noteInput = el.querySelector('.task-note');
       tasks.push({
+        task_id: taskId,
         pillar, label,
         status: taskStates[key] || 'pending',
         note: noteInput ? noteInput.value.trim() : ''
@@ -144,17 +201,15 @@
 
   // Init states from existing data
   document.querySelectorAll('.btn-done').forEach(btn => {
-    const item = btn.closest('.task-item');
+    const item = btn.closest('.weekly-task-item');
     if (item) {
-      const parts = item.id.split('-');
-      taskStates[parts[1] + '-' + parts[2]] = 'done';
+      taskStates[item.dataset.taskId] = 'done';
     }
   });
   document.querySelectorAll('.btn-skip').forEach(btn => {
-    const item = btn.closest('.task-item');
+    const item = btn.closest('.weekly-task-item');
     if (item) {
-      const parts = item.id.split('-');
-      taskStates[parts[1] + '-' + parts[2]] = 'skipped';
+      taskStates[item.dataset.taskId] = 'skipped';
     }
   });
 </script>

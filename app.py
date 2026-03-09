@@ -64,36 +64,41 @@ METRICS = {
     ],
 }
 
-WEEKLY_TASKS = {
+WEEKLY_TASK_LIBRARY = {
     "creativity": [
-        "Work on current single (production/recording)",
-        "Create 3 short-form videos (TikTok/Reels/Shorts)",
-        "Submit to 2+ playlist curators via SubmitHub",
-        "Reach out to 1 artist for collaboration",
-        "Update Spotify for Artists & track stats",
-        "Practice instrument/vocals (2+ hours)",
+        {"id": "finish-song-block", "label": "Finish one real piece of your current song", "why": "Small finished pieces create momentum faster than waiting for a perfect full release.", "effects": []},
+        {"id": "post-short-video", "label": "Post 2 short videos about your music", "why": "Short content is the fastest path to more listeners noticing your work.", "effects": []},
+        {"id": "playlist-pitch", "label": "Pitch your song to 2 playlists or blogs", "why": "Distribution matters as much as creation if you want your audience to grow.", "effects": []},
+        {"id": "book-performance", "label": "Lock in 1 live performance or open mic", "why": "Live reps build confidence and make your story more real.", "effects": [{"metric": "creativity.performances", "amount": 1}]},
+        {"id": "enter-competition", "label": "Enter 1 music competition or showcase", "why": "Competitions add proof points to your portfolio.", "effects": [{"metric": "creativity.competitions", "amount": 1}]},
     ],
     "communication": [
-        "Research/outline Y&G case or bill",
-        "Practice speech delivery (30 min)",
-        "Watch 2 winning debate performances",
-        "Draft or edit op-ed / blog post",
+        {"id": "case-outline", "label": "Write one strong section of your Y&G case or bill", "why": "Great speaking starts with clear thinking on paper.", "effects": []},
+        {"id": "speech-practice", "label": "Practice one speech for 20 focused minutes", "why": "Frequent reps sharpen delivery faster than occasional long sessions.", "effects": []},
+        {"id": "study-example", "label": "Study one winning debate or oratory example", "why": "Seeing strong structure makes it easier to improve your own.", "effects": []},
+        {"id": "publish-oped", "label": "Publish or submit one op-ed or article", "why": "Published writing is concrete evidence of your voice and ideas.", "effects": [{"metric": "communication.opeds", "amount": 1}]},
+        {"id": "give-speech", "label": "Give one speech, presentation, or argument round", "why": "Real speaking reps make confidence and results measurable.", "effects": [{"metric": "communication.speeches", "amount": 1}]},
     ],
     "leadership": [
-        "Reach out to / mentor an underclassman",
-        "Plan or lead a Y&G practice session",
-        "Write leadership journal entry (5 min)",
+        {"id": "mentor-student", "label": "Help one younger student this week", "why": "Leadership is strongest when someone else grows because of you.", "effects": [{"metric": "leadership.mentees", "amount": 1}]},
+        {"id": "lead-session", "label": "Lead one practice, meeting, or planning session", "why": "Leading the room is a visible signal of trust and responsibility.", "effects": [{"metric": "leadership.team_meetings", "amount": 1}]},
+        {"id": "event-step", "label": "Finish one planning step for an event", "why": "Organizing events turns ideas into visible outcomes.", "effects": []},
+        {"id": "role-prep", "label": "Take one step toward a leadership title", "why": "Applications, outreach, and prep work create future openings.", "effects": []},
+        {"id": "leadership-journal", "label": "Write a quick leadership reflection", "why": "Reflection helps you notice what style of leadership actually works.", "effects": []},
     ],
     "impact": [
-        "Send 3 gig booking inquiries",
-        "Rehearse with band",
-        "Post about mission on social media",
-        "Reach out to 1 community organization",
+        {"id": "play-gig", "label": "Play one gig, set, or community performance", "why": "Performing in public turns practice into impact and momentum.", "effects": [{"metric": "impact.gigs_played", "amount": 1}]},
+        {"id": "community-outreach", "label": "Reach out to one community partner or family", "why": "Direct outreach keeps the mission connected to real people.", "effects": [{"metric": "impact.families_helped", "amount": 1}]},
+        {"id": "collect-testimonial", "label": "Collect one testimonial or thank-you note", "why": "Specific testimonials make your impact easier to prove later.", "effects": [{"metric": "impact.testimonials", "amount": 1}]},
+        {"id": "donate-instrument", "label": "Donate or place one instrument", "why": "This is a direct, memorable proof point for your mission.", "effects": [{"metric": "impact.instruments_donated", "amount": 1}]},
+        {"id": "fundraising-push", "label": "Run one fundraising push or booking push", "why": "Consistent outreach is what eventually turns into revenue and reach.", "effects": []},
     ],
     "entrepreneurship": [
-        "Code / build app features (3+ hours)",
-        "Talk to 1 potential user for feedback",
-        "Record app progress (screenshot/video)",
+        {"id": "ship-feature", "label": "Ship one small app improvement", "why": "Shipping small updates keeps the app moving forward and usable.", "effects": []},
+        {"id": "user-feedback", "label": "Get feedback from one real user", "why": "Real user feedback is more valuable than guessing alone.", "effects": [{"metric": "entrepreneurship.app_users", "amount": 1}]},
+        {"id": "collect-app-testimonial", "label": "Collect one app testimonial", "why": "Testimonials make the app feel credible and help your story later.", "effects": [{"metric": "entrepreneurship.app_testimonials", "amount": 1}]},
+        {"id": "competition-entry", "label": "Enter one app or startup competition", "why": "Competitions create external milestones for your project.", "effects": [{"metric": "entrepreneurship.comp_entries", "amount": 1}]},
+        {"id": "record-progress", "label": "Capture one screenshot or demo of progress", "why": "A visible build trail makes growth easier to show over time.", "effects": []},
     ],
 }
 
@@ -104,6 +109,18 @@ ESSAY_ANGLES = [
     {"id":"challenge","label":"Challenge Essay","prompt":"Building from scratch as first-gen","pillars":["creativity","entrepreneurship"]},
     {"id":"curiosity","label":"Intellectual Curiosity","prompt":"Building the app — your problem → everyone's solution","pillars":["entrepreneurship","creativity"]},
 ]
+
+PILLAR_LOOKUP = {p["id"]: p for p in PILLARS}
+METRIC_LOOKUP = {
+    f"{pid}.{m['id']}": {**m, "pillar": pid}
+    for pid, metrics in METRICS.items()
+    for m in metrics
+}
+TASK_LOOKUP = {
+    f"{pid}.{task['id']}": {**task, "pillar": pid}
+    for pid, tasks in WEEKLY_TASK_LIBRARY.items()
+    for task in tasks
+}
 
 # ── Database ─────────────────────────────────────────────────
 def get_db():
@@ -136,6 +153,11 @@ def init_db():
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         week_id TEXT NOT NULL UNIQUE,
         logged_at TEXT NOT NULL,
+        data TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS weekly_plans (
+        week_id TEXT PRIMARY KEY,
+        generated_at TEXT NOT NULL,
         data TEXT NOT NULL
     );
     CREATE TABLE IF NOT EXISTS essay_notes (
@@ -173,23 +195,237 @@ def get_week_id(d=None):
     d = d or datetime.now()
     return d.strftime("%Y-W%U")
 
+def get_week_start(d=None):
+    d = d or datetime.now()
+    days_since_sunday = (d.weekday() + 1) % 7
+    start = d - timedelta(days=days_since_sunday)
+    return start.replace(hour=0, minute=0, second=0, microsecond=0)
+
+def week_reset_label(d=None):
+    start = get_week_start(d)
+    return start.strftime("%b %d")
+
 def get_metric_val(db, metric_id):
     r = db.execute("SELECT current_value FROM metrics WHERE id=?", (metric_id,)).fetchone()
     return r["current_value"] if r else 0
+
+def metric_progress(db, metric_id):
+    metric = METRIC_LOOKUP[metric_id]
+    return pct(get_metric_val(db, metric_id), metric["target"])
 
 def pct(cur, target):
     if target == 0: return 100
     return min(100, round((cur / target) * 100))
 
+def recent_activity_score(db, pid, limit=3):
+    logs = db.execute(
+        "SELECT data FROM weekly_logs ORDER BY logged_at DESC LIMIT ?",
+        (limit,)
+    ).fetchall()
+    total = done = 0
+    for row in logs:
+        data = json.loads(row["data"])
+        for task in data.get("tasks", []):
+            if task.get("pillar") != pid:
+                continue
+            if task.get("status") == "done":
+                done += 1
+            total += 1
+    if total == 0:
+        return None
+    return round(done / total * 100)
+
 def pillar_progress(db, pid):
     ms = METRICS.get(pid, [])
     if not ms: return 0
-    total = sum(pct(get_metric_val(db, f"{pid}.{m['id']}"), m["target"]) for m in ms)
-    return round(total / len(ms))
+    metric_score = sum(pct(get_metric_val(db, f"{pid}.{m['id']}"), m["target"]) for m in ms) / len(ms)
+    activity_score = recent_activity_score(db, pid)
+    if activity_score is None:
+        return round(metric_score)
+    return round(metric_score * 0.85 + activity_score * 0.15)
 
 def momentum_score(db):
     all_p = [pillar_progress(db, p["id"]) for p in PILLARS]
     return round(sum(all_p) / len(all_p)) if all_p else 0
+
+def metric_gap_summary(db, pid):
+    weakest = min(
+        METRICS[pid],
+        key=lambda m: pct(get_metric_val(db, f"{pid}.{m['id']}"), m["target"])
+    )
+    return weakest["label"]
+
+def pillar_attention_score(db, pid):
+    progress_gap = 100 - pillar_progress(db, pid)
+    weak_metric_count = sum(
+        1
+        for metric in METRICS[pid]
+        if pct(get_metric_val(db, f"{pid}.{metric['id']}"), metric["target"]) < 30
+    )
+    activity = recent_activity_score(db, pid)
+    activity_gap = 35 if activity is None else (100 - activity)
+    return round(progress_gap + weak_metric_count * 6 + activity_gap * 0.35, 2)
+
+def focus_reason(db, pid):
+    activity = recent_activity_score(db, pid)
+    if activity is not None and activity < 45:
+        return "Needs more weekly consistency"
+    return f"Biggest gap right now: {metric_gap_summary(db, pid)}"
+
+def rank_tasks_for_pillar(db, pid):
+    ranked = []
+    for idx, task in enumerate(WEEKLY_TASK_LIBRARY.get(pid, [])):
+        score = 20 - idx
+        for effect in task.get("effects", []):
+            score += (100 - metric_progress(db, effect["metric"])) + (effect["amount"] * 4)
+        ranked.append((score, {**task, "pillar": pid}))
+    ranked.sort(key=lambda item: item[0], reverse=True)
+    return [task for _, task in ranked]
+
+def format_effect(effect):
+    metric = METRIC_LOOKUP[effect["metric"]]
+    amount = int(effect["amount"]) if float(effect["amount"]).is_integer() else effect["amount"]
+    prefix = "+" if effect["amount"] > 0 else ""
+    return f"{metric['label']} {prefix}{amount}"
+
+def generate_weekly_plan(db, week_id):
+    focus_pillars = sorted(PILLARS, key=lambda p: pillar_attention_score(db, p["id"]), reverse=True)[:3]
+    task_slots = [2, 2, 1]
+    tasks = []
+    for pillar, slots in zip(focus_pillars, task_slots):
+        ranked_tasks = rank_tasks_for_pillar(db, pillar["id"])[:slots]
+        for task in ranked_tasks:
+            task_id = f"{pillar['id']}.{task['id']}"
+            tasks.append({
+                "task_id": task_id,
+                "pillar": pillar["id"],
+                "pillar_label": pillar["label"],
+                "pillar_icon": pillar["icon"],
+                "pillar_color": pillar["color"],
+                "label": task["label"],
+                "why": task["why"],
+                "effects": task.get("effects", []),
+                "effect_text": ", ".join(format_effect(effect) for effect in task.get("effects", [])),
+            })
+    return {
+        "week_id": week_id,
+        "week_starts": get_week_start().date().isoformat(),
+        "generated_at": datetime.now().isoformat(),
+        "reset_day": "Sunday morning",
+        "focus_pillars": [
+            {
+                "id": pillar["id"],
+                "label": pillar["label"],
+                "icon": pillar["icon"],
+                "color": pillar["color"],
+                "reason": focus_reason(db, pillar["id"]),
+            }
+            for pillar in focus_pillars
+        ],
+        "tasks": tasks,
+    }
+
+def get_or_create_weekly_plan(db, week_id=None):
+    week_id = week_id or get_week_id()
+    row = db.execute("SELECT data FROM weekly_plans WHERE week_id=?", (week_id,)).fetchone()
+    if row:
+        return json.loads(row["data"])
+    plan = generate_weekly_plan(db, week_id)
+    db.execute(
+        "INSERT INTO weekly_plans (week_id, generated_at, data) VALUES (?,?,?)",
+        (week_id, plan["generated_at"], json.dumps(plan))
+    )
+    db.commit()
+    return plan
+
+def task_match_key(task):
+    return task.get("task_id") or f"{task.get('pillar')}::{task.get('label')}"
+
+def merge_status(plan_task, saved_tasks):
+    status = "pending"
+    note = ""
+    for task in saved_tasks:
+        if task.get("task_id") == plan_task.get("task_id") or (
+            task.get("pillar") == plan_task.get("pillar") and task.get("label") == plan_task.get("label")
+        ):
+            status = task.get("status", "pending")
+            note = task.get("note", "")
+            break
+    return {
+        **plan_task,
+        "status": status,
+        "note": note,
+    }
+
+def load_custom_tasks(db, saved_tasks):
+    custom_rows = db.execute(
+        "SELECT id, pillar, label FROM custom_tasks WHERE active=1 ORDER BY id DESC"
+    ).fetchall()
+    items = []
+    for row in custom_rows:
+        task = {
+            "task_id": f"custom.{row['id']}",
+            "pillar": row["pillar"],
+            "pillar_label": PILLAR_LOOKUP[row["pillar"]]["label"],
+            "pillar_icon": PILLAR_LOOKUP[row["pillar"]]["icon"],
+            "pillar_color": PILLAR_LOOKUP[row["pillar"]]["color"],
+            "label": row["label"],
+            "why": "A custom task you added for this pillar.",
+            "effects": [],
+            "effect_text": "",
+            "custom": True,
+        }
+        items.append(merge_status(task, saved_tasks))
+    return items
+
+def apply_metric_delta(db, metric_id, delta, recorded_at):
+    if not delta:
+        return
+    current = get_metric_val(db, metric_id)
+    new_value = max(0, current + delta)
+    db.execute(
+        "UPDATE metrics SET current_value=?, updated_at=? WHERE id=?",
+        (new_value, recorded_at, metric_id)
+    )
+    db.execute(
+        "INSERT INTO metric_history (metric_id, value, recorded_at) VALUES (?,?,?)",
+        (metric_id, new_value, recorded_at)
+    )
+
+def apply_task_effects(db, week_id, old_tasks, new_tasks, recorded_at):
+    plan = get_or_create_weekly_plan(db, week_id)
+    plan_tasks = {task["task_id"]: task for task in plan.get("tasks", [])}
+    old_map = {task_match_key(task): task for task in old_tasks}
+    new_map = {task_match_key(task): task for task in new_tasks}
+    all_keys = set(old_map) | set(new_map)
+    for key in all_keys:
+        prev_done = old_map.get(key, {}).get("status") == "done"
+        new_done = new_map.get(key, {}).get("status") == "done"
+        if prev_done == new_done:
+            continue
+        task = plan_tasks.get(new_map.get(key, {}).get("task_id")) or plan_tasks.get(old_map.get(key, {}).get("task_id"))
+        if not task:
+            continue
+        direction = 1 if new_done else -1
+        for effect in task.get("effects", []):
+            apply_metric_delta(db, effect["metric"], effect["amount"] * direction, recorded_at)
+
+def maybe_add_essay_notes(db, tasks, recorded_at):
+    for task in tasks:
+        if task.get("status") != "done" or not task.get("note"):
+            continue
+        pillar = task.get("pillar", "")
+        relevant = [angle for angle in ESSAY_ANGLES if pillar in angle.get("pillars", [])]
+        for angle in relevant:
+            exists = db.execute(
+                "SELECT 1 FROM essay_notes WHERE angle_id=? AND pillar=? AND note=? AND source_task=?",
+                (angle["id"], pillar, task["note"], task.get("label", ""))
+            ).fetchone()
+            if not exists:
+                db.execute(
+                    "INSERT INTO essay_notes (angle_id, pillar, note, source_task, created_at) VALUES (?,?,?,?,?)",
+                    (angle["id"], pillar, task["note"], task.get("label", ""), recorded_at)
+                )
 
 def generate_nudges(db):
     nudges = []
@@ -250,6 +486,7 @@ def generate_nudges(db):
 @app.route("/")
 def dashboard():
     db = get_db()
+    weekly_plan = get_or_create_weekly_plan(db)
     mom = momentum_score(db)
     pillar_data = []
     for p in PILLARS:
@@ -264,7 +501,8 @@ def dashboard():
     has_log = db.execute("SELECT 1 FROM weekly_logs WHERE week_id=?", (cur_week,)).fetchone()
     return render_template("dashboard.html",
         momentum=mom, pillars=pillar_data, nudges=nudges,
-        cur_week=cur_week, has_log=bool(has_log), essays=ESSAY_ANGLES)
+        cur_week=cur_week, has_log=bool(has_log), essays=ESSAY_ANGLES,
+        weekly_plan=weekly_plan, reset_label=week_reset_label())
 
 @app.route("/pillars")
 @app.route("/pillars/<pillar_id>")
@@ -302,33 +540,12 @@ def update_metric():
 def weekly():
     db = get_db()
     cur_week = get_week_id()
+    weekly_plan = get_or_create_weekly_plan(db, cur_week)
     existing = db.execute("SELECT data FROM weekly_logs WHERE week_id=?", (cur_week,)).fetchone()
     existing_data = json.loads(existing["data"]) if existing else None
-    tasks_by_pillar = {}
-    for p in PILLARS:
-        pid = p["id"]
-        tasks = []
-        for t in WEEKLY_TASKS.get(pid, []):
-            status = "pending"
-            note = ""
-            if existing_data:
-                for et in existing_data.get("tasks", []):
-                    if et.get("label") == t:
-                        status = et.get("status", "pending")
-                        note = et.get("note", "")
-            tasks.append({"label": t, "pillar": pid, "status": status, "note": note})
-        # add custom tasks
-        custom = db.execute("SELECT label FROM custom_tasks WHERE pillar=? AND active=1", (pid,)).fetchall()
-        for c in custom:
-            status = "pending"
-            note = ""
-            if existing_data:
-                for et in existing_data.get("tasks", []):
-                    if et.get("label") == c["label"]:
-                        status = et.get("status", "pending")
-                        note = et.get("note", "")
-            tasks.append({"label": c["label"], "pillar": pid, "status": status, "note": note, "custom": True})
-        tasks_by_pillar[pid] = tasks
+    saved_tasks = existing_data.get("tasks", []) if existing_data else []
+    focus_tasks = [merge_status(task, saved_tasks) for task in weekly_plan.get("tasks", [])]
+    custom_tasks = load_custom_tasks(db, saved_tasks)
     past_logs = db.execute("SELECT week_id, data FROM weekly_logs ORDER BY logged_at DESC LIMIT 8").fetchall()
     past = []
     for l in past_logs:
@@ -336,8 +553,17 @@ def weekly():
         done = sum(1 for t in d.get("tasks",[]) if t.get("status")=="done")
         total = len(d.get("tasks",[]))
         past.append({"week": l["week_id"], "done": done, "total": total, "reflection": d.get("reflection","")})
-    return render_template("weekly.html", pillars=PILLARS, tasks=tasks_by_pillar,
-                           cur_week=cur_week, has_existing=bool(existing_data), past_logs=past)
+    return render_template(
+        "weekly.html",
+        cur_week=cur_week,
+        has_existing=bool(existing_data),
+        past_logs=past,
+        weekly_plan=weekly_plan,
+        focus_tasks=focus_tasks,
+        custom_tasks=custom_tasks,
+        reset_label=week_reset_label(),
+        reflection=(existing_data or {}).get("reflection", "")
+    )
 
 @app.route("/api/weekly", methods=["POST"])
 def save_weekly():
@@ -345,22 +571,17 @@ def save_weekly():
     data = request.json
     wid = get_week_id()
     now = datetime.now().isoformat()
+    existing = db.execute("SELECT data FROM weekly_logs WHERE week_id=?", (wid,)).fetchone()
+    old_data = json.loads(existing["data"]) if existing else {"tasks": [], "reflection": ""}
+    apply_task_effects(db, wid, old_data.get("tasks", []), data.get("tasks", []), now)
     payload = json.dumps(data)
-    existing = db.execute("SELECT 1 FROM weekly_logs WHERE week_id=?", (wid,)).fetchone()
     if existing:
         db.execute("UPDATE weekly_logs SET data=?, logged_at=? WHERE week_id=?", (payload, now, wid))
     else:
         db.execute("INSERT INTO weekly_logs (week_id, logged_at, data) VALUES (?,?,?)", (wid, now, payload))
-    # auto-add essay notes for completed tasks with notes
-    for t in data.get("tasks", []):
-        if t.get("status") == "done" and t.get("note"):
-            pillar = t.get("pillar", "")
-            relevant = [a for a in ESSAY_ANGLES if pillar in a.get("pillars", [])]
-            for angle in relevant:
-                db.execute("INSERT INTO essay_notes (angle_id, pillar, note, source_task, created_at) VALUES (?,?,?,?,?)",
-                           (angle["id"], pillar, t["note"], t.get("label",""), now))
+    maybe_add_essay_notes(db, data.get("tasks", []), now)
     db.commit()
-    return jsonify({"ok": True})
+    return jsonify({"ok": True, "updated_week": wid})
 
 @app.route("/api/custom-task", methods=["POST"])
 def add_custom_task():
