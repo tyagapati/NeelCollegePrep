@@ -396,7 +396,7 @@ def group_weekly_tasks(focus_pillars, focus_tasks, custom_tasks):
 
     sections = []
     focus_lookup = {pillar["id"]: pillar for pillar in focus_pillars}
-    for pid in ordered_ids:
+    for idx, pid in enumerate(ordered_ids, start=1):
         items = task_groups.get(pid, [])
         if not items:
             continue
@@ -406,12 +406,16 @@ def group_weekly_tasks(focus_pillars, focus_tasks, custom_tasks):
             task["label"].lower(),
         ))
         pillar = PILLAR_LOOKUP[pid]
+        overdue_count = sum(1 for task in items if task.get("carryover"))
         sections.append({
             "id": pid,
             "label": pillar["label"],
             "icon": pillar["icon"],
             "color": pillar["color"],
             "reason": focus_lookup.get(pid, {}).get("reason", ""),
+            "rank": idx,
+            "task_count": len(items),
+            "overdue_count": overdue_count,
             "tasks": items,
         })
     return sections

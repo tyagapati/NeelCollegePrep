@@ -4,7 +4,7 @@
 <div class="page-header">
   <div>
     <div class="eyebrow">Weekly check-in</div>
-    <h1 class="section-title" style="margin-top:10px;">What needs attention this week?</h1>
+    <h1 class="section-title" style="margin-top:8px;">Weekly focus</h1>
     <div class="section-sub">{{ cur_week }} · Tasks marked not done will keep showing up until they are done or closed.</div>
   </div>
 </div>
@@ -47,59 +47,70 @@
 {% endif %}
 
 {% for group in grouped_tasks %}
-<div class="card">
-  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
-    <div>
-      <span class="pillar-tag" style="background:{{ group.color }}12;color:{{ group.color }};">{{ group.icon }} {{ group.label }}</span>
-      {% if group.reason %}
-      <div style="font-size:12px;color:var(--muted);margin-top:8px;">{{ group.reason }}</div>
-      {% endif %}
+<details class="accordion" {% if loop.first %}open{% endif %}>
+  <summary>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+      <div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <span class="pillar-tag" style="background:{{ group.color }}12;color:{{ group.color }};">{{ group.icon }} {{ group.label }}</span>
+          <span class="badge" style="background:rgba(109,40,217,0.08);color:var(--blue);">Rank #{{ group.rank }}</span>
+          <span class="badge" style="background:rgba(15,23,42,0.05);color:var(--text);">{{ group.task_count }} tasks</span>
+          {% if group.overdue_count %}
+          <span class="badge" style="background:#fff7ed;color:#c2410c;">{{ group.overdue_count }} overdue</span>
+          {% endif %}
+        </div>
+        {% if group.reason %}
+        <div style="font-size:12px;color:var(--muted);margin-top:8px;">{{ group.reason }}</div>
+        {% endif %}
+      </div>
+      <div style="font-size:14px;color:var(--muted);">▾</div>
     </div>
-    <div class="badge" style="background:rgba(15,23,42,0.05);color:var(--text);">{{ group.tasks|length }} tasks</div>
-  </div>
-  <div class="stack-sm" style="margin-bottom:12px;">
-    {% for t in group.tasks %}
-    <div class="task-item weekly-task-item" data-task-id="{{ t.task_id }}" data-pillar="{{ t.pillar }}" data-label="{{ t.label }}">
-      <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap;margin-bottom:10px;">
-        <div>
-          <div style="font-size:15px;font-weight:600;color:var(--text);">{{ t.label }}</div>
-          <div style="font-size:12px;color:var(--muted);margin-top:6px;">
-            {% if t.carryover %}
-            <span class="badge" style="background:#fff7ed;color:#c2410c;margin-right:8px;">Carryover from {{ t.carryover_week }}</span>
-            {% endif %}
-            {% if t.custom %}
-            <span class="badge" style="background:#eef2ff;color:#4338ca;margin-right:8px;">Custom</span>
-            {% endif %}
-            {% if t.effect_text %}
-            <span class="badge" style="background:#ecfdf5;color:#047857;">Auto-updates: {{ t.effect_text }}</span>
-            {% endif %}
+  </summary>
+  <div class="accordion-body">
+    <div class="stack-sm" style="margin-bottom:12px;">
+      {% for t in group.tasks %}
+      <div class="task-item weekly-task-item {% if t.carryover %}overdue{% endif %}" data-task-id="{{ t.task_id }}" data-pillar="{{ t.pillar }}" data-label="{{ t.label }}">
+        <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap;margin-bottom:10px;">
+          <div>
+            <div style="font-size:15px;font-weight:600;color:var(--text);">{{ t.label }}</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:6px;">
+              {% if t.carryover %}
+              <span class="badge" style="background:#fff7ed;color:#c2410c;margin-right:8px;">Carryover from {{ t.carryover_week }}</span>
+              {% endif %}
+              {% if t.custom %}
+              <span class="badge" style="background:#eef2ff;color:#4338ca;margin-right:8px;">Custom</span>
+              {% endif %}
+              {% if t.effect_text %}
+              <span class="badge" style="background:#ecfdf5;color:#047857;">Auto-updates: {{ t.effect_text }}</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        <div class="task-grid">
+          <div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">{{ t.why }}</div>
+            <input type="text" placeholder="Add a note or quick comment..."
+                   value="{{ t.note }}" class="task-note"
+                   data-task-id="{{ t.task_id }}">
+          </div>
+          <div class="task-actions" style="justify-content:flex-end;">
+            <button class="btn btn-sm {% if t.status == 'done' %}btn-done{% endif %}"
+                    onclick="setStatus(this, '{{ t.task_id }}', 'done')">Done</button>
+            <button class="btn btn-sm {% if t.status == 'not_done' %}btn-skip{% endif %}"
+                    onclick="setStatus(this, '{{ t.task_id }}', 'not_done')">Not done</button>
+            <button class="btn btn-sm {% if t.status == 'closed' %}btn-closed{% endif %}"
+                    onclick="setStatus(this, '{{ t.task_id }}', 'closed')">Close</button>
           </div>
         </div>
       </div>
-      <div class="task-grid">
-        <div>
-          <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">{{ t.why }}</div>
-          <input type="text" placeholder="Add a note or quick comment..."
-                 value="{{ t.note }}" class="task-note"
-                 data-task-id="{{ t.task_id }}">
-        </div>
-        <div class="task-actions" style="justify-content:flex-end;">
-          <button class="btn btn-sm {% if t.status == 'done' %}btn-done{% endif %}"
-                  onclick="setStatus(this, '{{ t.task_id }}', 'done')">Done</button>
-          <button class="btn btn-sm {% if t.status == 'not_done' %}btn-skip{% endif %}"
-                  onclick="setStatus(this, '{{ t.task_id }}', 'not_done')">Not done</button>
-          <button class="btn btn-sm {% if t.status == 'closed' %}btn-closed{% endif %}"
-                  onclick="setStatus(this, '{{ t.task_id }}', 'closed')">Close</button>
-        </div>
-      </div>
+      {% endfor %}
     </div>
-    {% endfor %}
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <input type="text" placeholder="Add a custom task for {{ group.label }}..." id="custom-{{ group.id }}" style="min-width:260px;flex:1;">
+      <button class="btn btn-sm" onclick="addCustom('{{ group.id }}')">Add task</button>
+    </div>
   </div>
-  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-    <input type="text" placeholder="Add a custom task for {{ group.label }}..." id="custom-{{ group.id }}" style="min-width:260px;flex:1;">
-    <button class="btn btn-sm" onclick="addCustom('{{ group.id }}')">Add task</button>
-  </div>
-</div>
+</details>
 {% endfor %}
 
 <div class="grid-2">

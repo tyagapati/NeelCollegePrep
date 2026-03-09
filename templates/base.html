@@ -121,6 +121,12 @@
     }
     .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid-main {
+      display: grid;
+      grid-template-columns: minmax(0, 3fr) minmax(280px, 1fr);
+      gap: 16px;
+      align-items: start;
+    }
     .split-hero {
       display: grid;
       grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.9fr);
@@ -252,6 +258,36 @@
       border-radius: 16px;
       margin-bottom: 10px;
       background: rgba(255,255,255,0.76);
+    }
+    .track-card {
+      padding: 12px 14px;
+      border: 1px solid rgba(148, 163, 184, 0.14);
+      border-radius: 14px;
+      background: rgba(255,255,255,0.78);
+    }
+    .accordion {
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      border-radius: 18px;
+      background: rgba(255,255,255,0.82);
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+    .accordion summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 14px 16px;
+    }
+    .accordion summary::-webkit-details-marker { display: none; }
+    .accordion[open] summary {
+      border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+      background: rgba(248, 250, 252, 0.8);
+    }
+    .accordion-body {
+      padding: 14px 16px 16px;
+    }
+    .task-item.overdue {
+      border-color: rgba(245, 158, 11, 0.28);
+      background: #fffaf0;
     }
     .task-label { font-size: 13px; font-weight: 500; margin-bottom: 8px; color: var(--text-soft); }
     .task-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
@@ -433,6 +469,7 @@
       .split-hero,
       .grid-2,
       .grid-3,
+      .grid-main,
       .pillars-grid,
       .stat-strip { grid-template-columns: 1fr; }
       .metric-row { grid-template-columns: 1fr; }
