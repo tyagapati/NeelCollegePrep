@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Essay Strategy — College Prep Tracker{% endblock %}
+{% block content %}
+<h1 class="section-title">✍️ Essay Strategy</h1>
+<div class="section-sub">Your essay bank grows automatically from weekly check-in notes. Add manual notes anytime.</div>
+
+<!-- Core Narrative -->
+<div class="card" style="background:#faf5ff;border-color:#e9d5ff;">
+  <div style="font-size:12px;font-weight:600;color:var(--purple);margin-bottom:4px;">YOUR CORE NARRATIVE</div>
+  <div style="font-size:14px;line-height:1.7;color:#581c87;">
+    You're not just a musician or a debater. You're someone who experienced a gap — as a first-gen kid passionate about music with no roadmap — and built the roadmap yourself. You created the music, built the audience, raised money, gave instruments to kids like you, and built an app so the next kid doesn't struggle the way you did.
+  </div>
+</div>
+
+{% for a in angles %}
+<div class="card">
+  <div class="collapsible-header" onclick="toggleEssay('essay-{{ a.id }}', this)">
+    <div>
+      <h3 style="margin:0;font-size:15px;">{{ a.label }}</h3>
+      <div style="font-size:12px;color:var(--muted);margin-top:2px;">Prompt angle: {{ a.prompt }}</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span class="badge" style="background:#E0E7FF;color:#3730A3;">{{ a.notes|length }} notes</span>
+      <span class="chevron" style="font-size:16px;transition:transform 0.2s;">▾</span>
+    </div>
+  </div>
+
+  <div id="essay-{{ a.id }}" style="margin-top:10px;">
+    <!-- Linked pillars -->
+    <div style="margin-bottom:8px;">
+      {% for pid in a.pillars %}
+        {% for p in pillars %}
+          {% if p.id == pid %}
+            <span class="pillar-tag" style="background:{{ p.color }}15;color:{{ p.color }};">{{ p.icon }} {{ p.label }}</span>
+          {% endif %}
+        {% endfor %}
+      {% endfor %}
+    </div>
+
+    <!-- Notes list -->
+    {% if a.notes %}
+      {% for n in a.notes %}
+      <div class="essay-card" style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div style="flex:1;">
+          <div style="font-size:13px;line-height:1.5;">{{ n.note }}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">
+            {% if n.source_task and n.source_task != 'manual' %}From: {{ n.source_task }} · {% endif %}{{ n.created_at[:10] }}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div style="font-size:13px;color:var(--muted);font-style:italic;padding:8px 0;">
+        No notes yet. Complete weekly tasks with notes to auto-populate, or add manually below.
+      </div>
+    {% endif %}
+
+    <!-- Add note -->
+    <div style="display:flex;gap:6px;margin-top:8px;">
+      <input type="text" placeholder="Add an essay note or experience..." id="note-{{ a.id }}" style="flex:1;font-size:13px;">
+      <select id="note-pillar-{{ a.id }}" style="width:auto;font-size:12px;padding:4px 8px;">
+        <option value="">Pillar</option>
+        {% for pid in a.pillars %}
+          {% for p in pillars %}{% if p.id == pid %}<option value="{{ pid }}">{{ p.icon }} {{ p.label }}</option>{% endif %}{% endfor %}
+        {% endfor %}
+      </select>
+      <button class="btn btn-sm btn-primary" onclick="addNote('{{ a.id }}')">+ Add</button>
+    </div>
+  </div>
+</div>
+{% endfor %}
+
+<!-- Essay Tips -->
+<div class="card" style="background:#FFFBEB;border-color:#FDE68A;">
+  <h3 style="color:#92400E;">💡 Essay Writing Tips</h3>
+  <div style="font-size:13px;color:#A16207;line-height:1.6;margin-top:6px;">
+    <strong>Start collecting material NOW.</strong> Every time you finish a task and add a note, you're building raw material for your essays. By summer 2027, you'll have dozens of specific moments, numbers, and reflections to draw from — instead of staring at a blank page trying to remember what you did.
+    <br><br>
+    <strong>Numbers tell stories.</strong> "I raised money" is forgettable. "I played 30 gigs, raised $10,000, and put instruments in the hands of 20 kids" is unforgettable. Track everything.
+    <br><br>
+    <strong>The best essays show transformation.</strong> Not "I did X" but "X changed how I see Y." Your weekly reflections capture these shifts in real time.
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function toggleEssay(id, el) {
+    const s = document.getElementById(id);
+    const c = el.querySelector('.chevron');
+    if (s.style.display === 'none') { s.style.display = 'block'; c.style.transform = 'rotate(0)'; }
+    else { s.style.display = 'none'; c.style.transform = 'rotate(-90deg)'; }
+  }
+
+  async function addNote(angleId) {
+    const note = document.getElementById('note-' + angleId).value.trim();
+    if (!note) return;
+    const pillar = document.getElementById('note-pillar-' + angleId).value;
+    await api('/api/essay-note', { angle_id: angleId, note, pillar, source: 'manual' });
+    showToast('Note added to essay bank! ✓');
+    setTimeout(() => location.reload(), 500);
+  }
+</script>
+{% endblock %}

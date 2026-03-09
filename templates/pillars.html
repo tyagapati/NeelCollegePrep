@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}Pillars — College Prep Tracker{% endblock %}
+{% block content %}
+<h1 class="section-title">🎯 Pillar Tracker</h1>
+<div class="section-sub">Track progress toward each goal. Tap a metric to update it.</div>
+
+<!-- Pillar Tabs -->
+<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;">
+  {% for p in pillars %}
+  <a href="/pillars/{{ p.id }}" class="btn {% if p.id == active %}btn-primary{% endif %}" style="text-decoration:none;font-size:12px;padding:6px 12px;">
+    {{ p.icon }} {{ p.label }}
+  </a>
+  {% endfor %}
+</div>
+
+{% for p in pillars %}
+{% if p.id == active %}
+<div class="fade-in">
+  <div class="card" style="border-left:4px solid {{ p.color }};">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+      <h3 style="margin:0;">{{ p.icon }} {{ p.label }}</h3>
+      <span style="font-size:20px;font-weight:800;color:{{ p.color }};">{{ p.progress }}%</span>
+    </div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">{{ p.desc }}</div>
+    <div class="bar-bg" style="height:10px;margin-bottom:16px;">
+      <div class="bar-fill" style="width:{{ p.progress }}%;background:{{ p.color }};height:10px;"></div>
+    </div>
+
+    {% for m in p.metrics %}
+    <div class="metric-row" id="metric-{{ p.id }}-{{ m.id }}">
+      <div class="metric-label">
+        {{ m.label }}
+        {% if m.type == 'milestone' and m.milestones %}
+          <div style="font-size:11px;color:var(--muted);">
+            {% if m.current|int > 0 and m.current|int <= m.milestones|length %}
+              Current: {{ m.milestones[m.current|int - 1] }}
+            {% endif %}
+          </div>
+        {% endif %}
+      </div>
+      <div class="metric-bar">
+        <div class="bar-bg"><div class="bar-fill" style="width:{{ m.pct }}%;background:{{ p.color }};"></div></div>
+      </div>
+      <div class="metric-val" style="color:{% if m.pct >= 75 %}var(--green){% elif m.pct >= 40 %}var(--amber){% else %}var(--red){% endif %};">
+        {% if m.unit == '$' %}${% endif %}{{ m.current|int }}<span style="font-weight:400;color:var(--muted);">/{% if m.unit == '$' %}${% endif %}{{ m.target }}</span>
+      </div>
+      <button class="btn btn-sm" onclick="editMetric('{{ p.id }}.{{ m.id }}', {{ m.current }}, '{{ m.label }}', '{{ m.type }}', '{{ m.milestones|default([])|tojson|e }}')" style="flex-shrink:0;">
+        ✏️
+      </button>
+    </div>
+    {% endfor %}
+
+    {% if p.metrics[0].history|length > 1 %}
+    <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border);">
+      <div style="font-size:13px;font-weight:600;color:var(--muted);margin-bottom:8px;">📈 Recent History ({{ p.metrics[0].label }})</div>
+      <div style="display:flex;align-items:flex-end;gap:4px;height:60px;">
+        {% set max_v = p.metrics[0].history|map(attribute='v')|max %}
+        {% for h in p.metrics[0].history %}
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;">
+          <div style="width:100%;background:{{ p.color }};border-radius:3px 3px 0 0;
+                      height:{{ (h.v / (max_v if max_v > 0 else 1) * 50)|round }}px;min-height:4px;"></div>
+          <div style="font-size:9px;color:var(--muted);margin-top:2px;">{{ h.d[5:] }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+{% endfor %}
+
+<!-- Edit Modal -->
+<div id="editModal" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;padding:24px;max-width:400px;width:90%;">
+    <h3 id="editTitle" style="margin-bottom:12px;"></h3>
+    <div id="editNumberField">
+      <label style="font-size:13px;color:var(--muted);display:block;margin-bottom:4px;">New value:</label>
+      <input type="number" id="editValue" min="0" step="1" style="font-size:18px;font-weight:700;">
+    </div>
+    <div id="editMilestoneField" style="display:none;">
+      <label style="font-size:13px;color:var(--muted);display:block;margin-bottom:4px;">Select stage:</label>
+      <select id="editMilestone" style="font-size:16px;"></select>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px;">
+      <button class="btn btn-primary" onclick="saveMetric()" style="flex:1;">Save</button>
+      <button class="btn" onclick="closeEdit()" style="flex:1;">Cancel</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  let currentEditId = null;
+  function editMetric(id, cur, label, type, milestonesJson) {
+    currentEditId = id;
+    document.getElementById('editTitle').textContent = 'Update: ' + label;
+    const modal = document.getElementById('editModal');
+    modal.style.display = 'flex';
+    if (type === 'milestone') {
+      document.getElementById('editNumberField').style.display = 'none';
+      document.getElementById('editMilestoneField').style.display = 'block';
+      const sel = document.getElementById('editMilestone');
+      sel.innerHTML = '';
+      try {
+        const ms = JSON.parse(milestonesJson.replace(/&quot;/g,'"').replace(/&#34;/g,'"'));
+        ms.forEach((m, i) => {
+          const opt = document.createElement('option');
+          opt.value = i + 1; opt.textContent = m;
+          if (i + 1 === Math.round(cur)) opt.selected = true;
+          sel.appendChild(opt);
+        });
+      } catch(e) { console.error(e); }
+    } else {
+      document.getElementById('editNumberField').style.display = 'block';
+      document.getElementById('editMilestoneField').style.display = 'none';
+      document.getElementById('editValue').value = cur;
+      document.getElementById('editValue').focus();
+    }
+  }
+  function closeEdit() {
+    document.getElementById('editModal').style.display = 'none';
+    currentEditId = null;
+  }
+  async function saveMetric() {
+    const numField = document.getElementById('editNumberField');
+    const val = numField.style.display !== 'none'
+      ? parseFloat(document.getElementById('editValue').value)
+      : parseInt(document.getElementById('editMilestone').value);
+    await api('/api/metric', { id: currentEditId, value: val });
+    showToast('Metric updated! ✓');
+    closeEdit();
+    setTimeout(() => location.reload(), 500);
+  }
+  document.getElementById('editModal').addEventListener('click', function(e) {
+    if (e.target === this) closeEdit();
+  });
+</script>
+{% endblock %}

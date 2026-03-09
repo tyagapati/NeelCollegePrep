@@ -1,0 +1,138 @@
+# 🚀 Deployment Guide — College Prep Tracker
+# Total cost: $0/month
+
+## Project Structure (create these folders/files)
+```
+college-tracker/
+├── app.py                    # Main Flask app (from artifact)
+├── requirements.txt          # Dependencies
+├── tracker.db                # Auto-created on first run
+├── render.yaml               # Render.com config (Option A)
+├── templates/
+│   ├── base.html             # Layout template
+│   ├── dashboard.html        # Dashboard page
+│   ├── pillars.html          # Pillar tracking page
+│   ├── weekly.html           # Weekly check-in page
+│   ├── essay.html            # Essay strategy page
+│   └── share.html            # Shareable/printable page
+```
+
+## STEP 1: Set Up Locally (5 minutes)
+
+```bash
+# Create project folder
+mkdir college-tracker && cd college-tracker
+mkdir templates
+
+# Copy all artifact files into the right places
+# (app.py in root, templates in templates/)
+
+# Create virtual environment
+python3 -m venv venv
+source venv/bin/activate        # Mac/Linux
+# venv\Scripts\activate         # Windows
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run locally
+python app.py
+# Open http://localhost:5000
+```
+
+## STEP 2: Deploy FREE — Pick One
+
+---
+
+### Option A: Render.com (Recommended — easiest)
+**Free tier: 750 hours/month, auto-sleep after 15 min inactivity**
+
+1. Create account at https://render.com (free)
+2. Push your code to GitHub:
+   ```bash
+   git init
+   git add .
+   git commit -m "Initial commit"
+   # Create a repo on GitHub, then:
+   git remote add origin https://github.com/YOUR_USERNAME/college-tracker.git
+   git push -u origin main
+   ```
+3. On Render dashboard → New → Web Service
+4. Connect your GitHub repo
+5. Settings:
+   - **Build Command:** `pip install -r requirements.txt`
+   - **Start Command:** `gunicorn app:app`
+   - **Instance Type:** Free
+6. Click "Create Web Service"
+7. Your app will be live at `https://college-tracker-xxxx.onrender.com`
+
+Create `render.yaml` in your project root:
+```yaml
+services:
+  - type: web
+    name: college-tracker
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    plan: free
+```
+
+---
+
+### Option B: PythonAnywhere (also free)
+**Free tier: always-on, 512MB storage**
+
+1. Create account at https://www.pythonanywhere.com (free)
+2. Go to "Web" tab → "Add a new web app"
+3. Choose Flask, Python 3.10+
+4. Upload your files via the "Files" tab
+5. In the WSGI config file, point to your app:
+   ```python
+   import sys
+   sys.path.insert(0, '/home/YOUR_USERNAME/college-tracker')
+   from app import app as application
+   ```
+6. Reload the web app
+7. Live at `https://YOUR_USERNAME.pythonanywhere.com`
+
+---
+
+### Option C: Railway.app
+**Free tier: $5 credit/month (more than enough)**
+
+1. https://railway.app → Sign in with GitHub
+2. New Project → Deploy from GitHub
+3. It auto-detects Flask. Done.
+
+---
+
+## STEP 3: Make It Your Own
+
+### Change your starting metrics:
+Edit the `METRICS` dict in `app.py` — change `start` and `target` values.
+
+### Add/remove weekly tasks:
+Edit the `WEEKLY_TASKS` dict in `app.py`.
+
+### Change essay angles:
+Edit the `ESSAY_ANGLES` list in `app.py`.
+
+### Custom domain (optional, ~$10/year):
+Buy a domain on Namecheap/Cloudflare, point it to your host.
+
+---
+
+## 💡 Tips
+
+- **Bookmark the app on your phone's home screen** — it works like a native app
+- **Set a phone reminder** for Friday 8pm: "Do weekly check-in"
+- **Print the Share page** before college counselor meetings
+- **Back up your database** by downloading `tracker.db` periodically
+- The SQLite database file stores everything — if you move hosts, just copy it
+
+## Troubleshooting
+
+- **"Module not found"**: Make sure you activated the virtual environment
+- **Port already in use**: Change `port=5000` to `port=5001` in app.py
+- **Templates not found**: Make sure templates/ folder is in the same directory as app.py
+- **Render free tier sleeps**: First load after sleep takes ~30 seconds — this is normal

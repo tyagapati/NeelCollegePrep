@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block title %}Weekly Check-in — College Prep Tracker{% endblock %}
+{% block content %}
+<h1 class="section-title">📝 Weekly Check-in</h1>
+<div class="section-sub">{{ cur_week }} · Mark tasks done, skip what you missed, add notes for your essay bank</div>
+
+{% if has_existing %}
+<div style="padding:8px 14px;background:#DEF7EC;border-radius:8px;font-size:13px;color:#03543F;margin-bottom:12px;">
+  ✅ You already logged this week. Editing will update your existing entry.
+</div>
+{% endif %}
+
+{% for p in pillars %}
+<div class="card" style="border-left:4px solid {{ p.color }};">
+  <div class="collapsible-header" onclick="toggleSection('sect-{{ p.id }}', this)">
+    <h3 style="margin:0;">{{ p.icon }} {{ p.label }}</h3>
+    <span class="chevron" style="font-size:18px;transition:transform 0.2s;">▾</span>
+  </div>
+  <div id="sect-{{ p.id }}" class="section-body" style="margin-top:10px;">
+    {% for t in tasks[p.id] %}
+    <div class="task-item" id="task-{{ p.id }}-{{ loop.index0 }}" data-pillar="{{ p.id }}" data-label="{{ t.label }}">
+      <div class="task-label">
+        {{ t.label }}
+        {% if t.custom %}<span class="badge" style="background:#E0E7FF;color:#3730A3;">custom</span>{% endif %}
+      </div>
+      <div class="task-actions">
+        <button class="btn btn-sm {% if t.status == 'done' %}btn-done{% endif %}"
+                onclick="setStatus(this, '{{ p.id }}', {{ loop.index0 }}, 'done')">✅ Done</button>
+        <button class="btn btn-sm {% if t.status == 'skipped' %}btn-skip{% endif %}"
+                onclick="setStatus(this, '{{ p.id }}', {{ loop.index0 }}, 'skipped')">⏭ Couldn't do</button>
+        <input type="text" placeholder="Quick note (feeds your essay bank)..."
+               value="{{ t.note }}" class="task-note"
+               style="flex:1;min-width:150px;font-size:12px;padding:5px 8px;"
+               data-pillar="{{ p.id }}" data-idx="{{ loop.index0 }}">
+      </div>
+    </div>
+    {% endfor %}
+    <!-- Add custom task -->
+    <div style="display:flex;gap:6px;margin-top:8px;">
+      <input type="text" placeholder="Add a custom task..." id="custom-{{ p.id }}" style="flex:1;font-size:12px;padding:5px 8px;">
+      <button class="btn btn-sm" onclick="addCustom('{{ p.id }}')">+ Add</button>
+    </div>
+  </div>
+</div>
+{% endfor %}
+
+<!-- Weekly Reflection -->
+<div class="card">
+  <h3>🪞 Weekly Reflection</h3>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">How did this week feel? What's your #1 priority next week? (Optional but great for essays)</div>
+  <textarea id="reflection" placeholder="This week I..." rows="3"></textarea>
+</div>
+
+<!-- Save Button -->
+<div style="text-align:center;margin:16px 0;">
+  <button class="btn btn-primary" onclick="saveWeekly()" style="padding:12px 40px;font-size:15px;font-weight:700;">
+    💾 Save Weekly Check-in
+  </button>
+</div>
+
+<!-- Past Weeks -->
+{% if past_logs %}
+<div style="margin-top:24px;">
+  <div class="section-title" style="font-size:16px;">📅 Past Weeks</div>
+  <div class="section-sub">Your check-in history</div>
+  {% for l in past_logs %}
+  <div class="card" style="padding:10px 14px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <span style="font-weight:600;font-size:14px;">{{ l.week }}</span>
+      <span>
+        <span style="color:var(--green);font-weight:700;">{{ l.done }}</span>
+        <span style="color:var(--muted);font-size:13px;">/ {{ l.total }} tasks</span>
+      </span>
+    </div>
+    {% if l.reflection %}
+    <div style="font-size:12px;color:var(--muted);margin-top:4px;font-style:italic;">{{ l.reflection[:120] }}{% if l.reflection|length > 120 %}...{% endif %}</div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const taskStates = {};
+
+  function toggleSection(id, el) {
+    const s = document.getElementById(id);
+    const c = el.querySelector('.chevron');
+    if (s.style.display === 'none') { s.style.display = 'block'; c.style.transform = 'rotate(0)'; }
+    else { s.style.display = 'none'; c.style.transform = 'rotate(-90deg)'; }
+  }
+
+  function setStatus(btn, pillar, idx, status) {
+    const key = pillar + '-' + idx;
+    const current = taskStates[key];
+    if (current === status) { taskStates[key] = 'pending'; btn.className = 'btn btn-sm'; return; }
+    taskStates[key] = status;
+    const parent = btn.parentElement;
+    parent.querySelectorAll('.btn').forEach(b => b.className = 'btn btn-sm');
+    btn.className = 'btn btn-sm ' + (status === 'done' ? 'btn-done' : 'btn-skip');
+  }
+
+  async function addCustom(pillar) {
+    const input = document.getElementById('custom-' + pillar);
+    const label = input.value.trim();
+    if (!label) return;
+    await api('/api/custom-task', { pillar, label });
+    input.value = '';
+    showToast('Task added!');
+    setTimeout(() => location.reload(), 400);
+  }
+
+  async function saveWeekly() {
+    const tasks = [];
+    document.querySelectorAll('.task-item').forEach(el => {
+      const pillar = el.dataset.pillar;
+      const label = el.dataset.label;
+      const idx = el.id.split('-').pop();
+      const key = pillar + '-' + idx;
+      const noteInput = el.querySelector('.task-note');
+      tasks.push({
+        pillar, label,
+        status: taskStates[key] || 'pending',
+        note: noteInput ? noteInput.value.trim() : ''
+      });
+    });
+    const reflection = document.getElementById('reflection').value.trim();
+    await api('/api/weekly', { tasks, reflection });
+    showToast('Weekly check-in saved! 🎉');
+    setTimeout(() => window.location.href = '/', 1000);
+  }
+
+  // Init states from existing data
+  document.querySelectorAll('.btn-done').forEach(btn => {
+    const item = btn.closest('.task-item');
+    if (item) {
+      const parts = item.id.split('-');
+      taskStates[parts[1] + '-' + parts[2]] = 'done';
+    }
+  });
+  document.querySelectorAll('.btn-skip').forEach(btn => {
+    const item = btn.closest('.task-item');
+    if (item) {
+      const parts = item.id.split('-');
+      taskStates[parts[1] + '-' + parts[2]] = 'skipped';
+    }
+  });
+</script>
+{% endblock %}

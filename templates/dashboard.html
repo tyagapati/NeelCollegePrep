@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — College Prep Tracker{% endblock %}
+{% block content %}
+<div class="header-bar">
+  <div style="font-size:13px;color:var(--muted);margin-bottom:4px;">College Prep Command Center</div>
+  <h1 class="section-title" style="background:linear-gradient(135deg,#3B82F6,#8B5CF6,#EC4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">
+    Your Roadmap to Top 25
+  </h1>
+  <div style="font-size:12px;color:var(--muted);">Pre-Law / PoliSci • Fall 2027 Application</div>
+</div>
+
+<!-- Momentum Score -->
+<div class="card" style="text-align:center;padding:20px;">
+  <div style="font-size:13px;font-weight:600;color:var(--muted);margin-bottom:8px;">MOMENTUM SCORE</div>
+  <div class="momentum-ring">
+    <svg width="120" height="120">
+      <circle cx="60" cy="60" r="52" fill="none" stroke="#e5e7eb" stroke-width="10"/>
+      <circle cx="60" cy="60" r="52" fill="none"
+              stroke="{% if momentum >= 60 %}var(--green){% elif momentum >= 30 %}var(--amber){% else %}var(--red){% endif %}"
+              stroke-width="10" stroke-linecap="round"
+              stroke-dasharray="{{ (momentum / 100 * 327)|round }},327"/>
+    </svg>
+    <div class="momentum-num">{{ momentum }}</div>
+  </div>
+  <div style="font-size:12px;color:var(--muted);margin-top:6px;">
+    {% if momentum >= 60 %}On track — keep pushing! 🔥{% elif momentum >= 30 %}Building momentum — stay consistent 💪{% else %}Just getting started — every step counts 🌱{% endif %}
+  </div>
+</div>
+
+<!-- Pillar Overview -->
+<div class="section-title" style="font-size:16px;margin-top:16px;">Pillars at a Glance</div>
+<div class="section-sub">Tap any pillar for details</div>
+{% for p in pillars %}
+<a href="/pillars/{{ p.id }}" style="text-decoration:none;color:inherit;">
+  <div class="card" style="border-left:4px solid {{ p.color }};">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+      <span style="font-size:15px;font-weight:700;">{{ p.icon }} {{ p.label }}</span>
+      <span style="font-size:14px;font-weight:700;color:{{ p.color }};">{{ p.progress }}%</span>
+    </div>
+    <div class="bar-bg"><div class="bar-fill" style="width:{{ p.progress }}%;background:{{ p.color }};"></div></div>
+    <div style="font-size:12px;color:var(--muted);margin-top:6px;">
+      {% for m in p.metrics[:3] %}
+        {{ m.label }}: <strong>{{ m.current|int }}</strong>/{{ m.target }}{% if not loop.last %} · {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+</a>
+{% endfor %}
+
+<!-- Smart Nudges -->
+<div class="section-title" style="font-size:16px;margin-top:16px;">💡 Smart Nudges</div>
+<div class="section-sub">Personalized suggestions based on your progress</div>
+{% for n in nudges %}
+<div class="nudge" style="background:{% if n.type == 'behind' %}#FEF2F2{% elif n.type == 'tip' %}#F0FDF4{% elif n.type == 'activity' %}#FFFBEB{% else %}#EFF6FF{% endif %};">
+  <span class="icon">{{ n.pillar }}</span>
+  <span>{{ n.msg }}</span>
+</div>
+{% endfor %}
+
+<!-- Weekly Check-in CTA -->
+<div class="card" style="text-align:center;background:{% if has_log %}#F0FDF4{% else %}#FEF3C7{% endif %};border-color:{% if has_log %}#A7F3D0{% else %}#FDE68A{% endif %};">
+  {% if has_log %}
+    <div style="font-size:14px;font-weight:600;color:#065F46;">✅ Weekly check-in complete for {{ cur_week }}</div>
+    <a href="/weekly" class="btn btn-sm" style="margin-top:8px;display:inline-block;">Review & Edit</a>
+  {% else %}
+    <div style="font-size:14px;font-weight:600;color:#92400E;">📝 Time for your weekly check-in!</div>
+    <div style="font-size:12px;color:#A16207;margin:4px 0 8px;">Log what you accomplished this week</div>
+    <a href="/weekly" class="btn btn-primary" style="display:inline-block;">Start Check-in →</a>
+  {% endif %}
+</div>
+
+<!-- Core Narrative Reminder -->
+<div class="card" style="background:#1a1a2e;color:#fff;text-align:center;">
+  <div style="font-size:12px;font-weight:600;opacity:0.7;margin-bottom:4px;">YOUR STORY</div>
+  <div style="font-size:14px;font-style:italic;line-height:1.6;opacity:0.9;">
+    "I use music as a vehicle for leadership, advocacy, and access — and I build the tools and communities to make that possible for others."
+  </div>
+</div>
+{% endblock %}
