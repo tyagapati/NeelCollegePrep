@@ -1,79 +1,120 @@
 {% extends "base.html" %}
 {% block title %}Dashboard — College Prep Tracker{% endblock %}
 {% block content %}
-<div class="header-bar">
-  <div style="font-size:13px;color:var(--muted);margin-bottom:4px;">College Prep Command Center</div>
-  <h1 class="section-title" style="background:linear-gradient(135deg,#3B82F6,#8B5CF6,#EC4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">
-    Your Roadmap to Top 25
-  </h1>
-  <div style="font-size:12px;color:var(--muted);">Pre-Law / PoliSci • Fall 2027 Application</div>
+<div class="page-header">
+  <div>
+    <div class="eyebrow">Progress dashboard</div>
+    <h1 class="hero-title" style="margin-top:14px;max-width:720px;">A cleaner command center for steady, measurable progress.</h1>
+    <div class="hero-subtitle" style="margin-top:12px;">Track each pillar, keep weekly momentum high, and turn small updates into a stronger college story.</div>
+  </div>
+  <a href="/weekly" class="btn btn-primary">Open weekly check-in</a>
 </div>
 
-<!-- Momentum Score -->
-<div class="card" style="text-align:center;padding:20px;">
-  <div style="font-size:13px;font-weight:600;color:var(--muted);margin-bottom:8px;">MOMENTUM SCORE</div>
-  <div class="momentum-ring">
-    <svg width="120" height="120">
-      <circle cx="60" cy="60" r="52" fill="none" stroke="#e5e7eb" stroke-width="10"/>
-      <circle cx="60" cy="60" r="52" fill="none"
-              stroke="{% if momentum >= 60 %}var(--green){% elif momentum >= 30 %}var(--amber){% else %}var(--red){% endif %}"
-              stroke-width="10" stroke-linecap="round"
-              stroke-dasharray="{{ (momentum / 100 * 327)|round }},327"/>
-    </svg>
-    <div class="momentum-num">{{ momentum }}</div>
-  </div>
-  <div style="font-size:12px;color:var(--muted);margin-top:6px;">
-    {% if momentum >= 60 %}On track — keep pushing! 🔥{% elif momentum >= 30 %}Building momentum — stay consistent 💪{% else %}Just getting started — every step counts 🌱{% endif %}
-  </div>
-</div>
-
-<!-- Pillar Overview -->
-<div class="section-title" style="font-size:16px;margin-top:16px;">Pillars at a Glance</div>
-<div class="section-sub">Tap any pillar for details</div>
-{% for p in pillars %}
-<a href="/pillars/{{ p.id }}" style="text-decoration:none;color:inherit;">
-  <div class="card" style="border-left:4px solid {{ p.color }};">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-      <span style="font-size:15px;font-weight:700;">{{ p.icon }} {{ p.label }}</span>
-      <span style="font-size:14px;font-weight:700;color:{{ p.color }};">{{ p.progress }}%</span>
+<div class="hero-card page-block">
+  <div class="split-hero">
+    <div>
+      <div class="eyebrow" style="margin-bottom:16px;">Momentum score</div>
+      <h2 class="section-title" style="margin-bottom:12px;">Your roadmap is live. The next step is consistency.</h2>
+      <div class="section-sub" style="margin-bottom:0;">
+        {% if momentum >= 60 %}You are building strong momentum across the portfolio. Keep stacking visible wins each week.{% elif momentum >= 30 %}You are moving in the right direction. A few steady weekly check-ins will make the dashboard feel dramatically stronger.{% else %}You have a clean baseline now. Start with small weekly wins and the score will climb quickly.{% endif %}
+      </div>
+      <div class="stat-strip">
+        <div class="mini-stat">
+          <div class="label">Current week</div>
+          <div class="value">{{ cur_week }}</div>
+        </div>
+        <div class="mini-stat">
+          <div class="label">Check-in status</div>
+          <div class="value" style="font-size:18px;">{% if has_log %}Logged{% else %}Pending{% endif %}</div>
+        </div>
+        <div class="mini-stat">
+          <div class="label">Active pillars</div>
+          <div class="value">{{ pillars|length }}</div>
+        </div>
+      </div>
     </div>
-    <div class="bar-bg"><div class="bar-fill" style="width:{{ p.progress }}%;background:{{ p.color }};"></div></div>
-    <div style="font-size:12px;color:var(--muted);margin-top:6px;">
-      {% for m in p.metrics[:3] %}
-        {{ m.label }}: <strong>{{ m.current|int }}</strong>/{{ m.target }}{% if not loop.last %} · {% endif %}
-      {% endfor %}
+    <div class="card" style="text-align:center;background:rgba(255,255,255,0.76);margin-bottom:0;">
+      <div class="muted" style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:12px;">Overall progress</div>
+      <div class="momentum-ring">
+        <svg width="144" height="144">
+          <circle cx="72" cy="72" r="62" fill="none" stroke="#e2e8f0" stroke-width="12"/>
+          <circle cx="72" cy="72" r="62" fill="none"
+                  stroke="{% if momentum >= 60 %}var(--green){% elif momentum >= 30 %}var(--amber){% else %}var(--red){% endif %}"
+                  stroke-width="12" stroke-linecap="round"
+                  stroke-dasharray="{{ (momentum / 100 * 389)|round }},389"/>
+        </svg>
+        <div class="momentum-num">{{ momentum }}<span>Score</span></div>
+      </div>
+      <div class="muted" style="font-size:13px;margin-top:12px;">
+        {% if momentum >= 60 %}Strong trajectory{% elif momentum >= 30 %}Momentum building{% else %}Early stage{% endif %}
+      </div>
     </div>
   </div>
-</a>
-{% endfor %}
-
-<!-- Smart Nudges -->
-<div class="section-title" style="font-size:16px;margin-top:16px;">💡 Smart Nudges</div>
-<div class="section-sub">Personalized suggestions based on your progress</div>
-{% for n in nudges %}
-<div class="nudge" style="background:{% if n.type == 'behind' %}#FEF2F2{% elif n.type == 'tip' %}#F0FDF4{% elif n.type == 'activity' %}#FFFBEB{% else %}#EFF6FF{% endif %};">
-  <span class="icon">{{ n.pillar }}</span>
-  <span>{{ n.msg }}</span>
-</div>
-{% endfor %}
-
-<!-- Weekly Check-in CTA -->
-<div class="card" style="text-align:center;background:{% if has_log %}#F0FDF4{% else %}#FEF3C7{% endif %};border-color:{% if has_log %}#A7F3D0{% else %}#FDE68A{% endif %};">
-  {% if has_log %}
-    <div style="font-size:14px;font-weight:600;color:#065F46;">✅ Weekly check-in complete for {{ cur_week }}</div>
-    <a href="/weekly" class="btn btn-sm" style="margin-top:8px;display:inline-block;">Review & Edit</a>
-  {% else %}
-    <div style="font-size:14px;font-weight:600;color:#92400E;">📝 Time for your weekly check-in!</div>
-    <div style="font-size:12px;color:#A16207;margin:4px 0 8px;">Log what you accomplished this week</div>
-    <a href="/weekly" class="btn btn-primary" style="display:inline-block;">Start Check-in →</a>
-  {% endif %}
 </div>
 
-<!-- Core Narrative Reminder -->
-<div class="card" style="background:#1a1a2e;color:#fff;text-align:center;">
-  <div style="font-size:12px;font-weight:600;opacity:0.7;margin-bottom:4px;">YOUR STORY</div>
-  <div style="font-size:14px;font-style:italic;line-height:1.6;opacity:0.9;">
-    "I use music as a vehicle for leadership, advocacy, and access — and I build the tools and communities to make that possible for others."
+<div class="page-block">
+  <div class="section-title">Pillars at a glance</div>
+  <div class="section-sub">Open any pillar to update metrics and see the recent trend.</div>
+  <div class="pillars-grid">
+    {% for p in pillars %}
+    <a href="/pillars/{{ p.id }}" class="card-link">
+      <div class="card" style="margin-bottom:0;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px;">
+          <div>
+            <div class="eyebrow" style="background:{{ p.color }}12;color:{{ p.color }};border-color:transparent;">{{ p.icon }} {{ p.label }}</div>
+            <div class="muted" style="font-size:13px;margin-top:10px;">{{ p.desc }}</div>
+          </div>
+          <div class="right">
+            <div style="font-size:30px;font-weight:800;letter-spacing:-0.04em;color:{{ p.color }};">{{ p.progress }}%</div>
+            <div class="muted" style="font-size:12px;">complete</div>
+          </div>
+        </div>
+        <div class="bar-bg"><div class="bar-fill" style="width:{{ p.progress }}%;background:linear-gradient(90deg, {{ p.color }}, rgba(22,82,240,0.85));"></div></div>
+        <div class="stack-sm" style="margin-top:14px;font-size:13px;color:var(--text-soft);">
+          {% for m in p.metrics[:3] %}
+          <div style="display:flex;justify-content:space-between;gap:12px;">
+            <span>{{ m.label }}</span>
+            <strong>{% if m.unit == '$' %}${% endif %}{{ m.current|int }}/{{ m.target }}</strong>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="grid-2 page-block">
+  <div>
+    <div class="section-title">Smart nudges</div>
+    <div class="section-sub">Focused suggestions based on how the dashboard is moving right now.</div>
+    {% for n in nudges %}
+    <div class="nudge" style="background:{% if n.type == 'behind' %}#fff5f5{% elif n.type == 'tip' %}#f0fdf4{% elif n.type == 'activity' %}#fffbeb{% else %}#eff6ff{% endif %};border-color:{% if n.type == 'behind' %}rgba(239,68,68,0.12){% elif n.type == 'tip' %}rgba(16,185,129,0.12){% elif n.type == 'activity' %}rgba(245,158,11,0.16){% else %}rgba(22,82,240,0.12){% endif %};">
+      <span class="icon">{{ n.pillar }}</span>
+      <span>{{ n.msg }}</span>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="stack-sm">
+    <div class="card" style="background:{% if has_log %}#f0fdf4{% else %}#fffaf0{% endif %};border-color:{% if has_log %}rgba(16,185,129,0.14){% else %}rgba(245,158,11,0.18){% endif %};">
+      <div class="eyebrow" style="margin-bottom:12px;{% if has_log %}background:rgba(16,185,129,0.12);color:#047857;{% else %}background:rgba(245,158,11,0.14);color:#b45309;{% endif %}border-color:transparent;">Weekly check-in</div>
+      {% if has_log %}
+        <h3 style="font-size:22px;letter-spacing:-0.03em;">You logged this week already.</h3>
+        <div class="section-sub" style="margin:8px 0 16px;">Your entry for {{ cur_week }} is saved and ready if you want to refine it.</div>
+        <a href="/weekly" class="btn">Review and edit</a>
+      {% else %}
+        <h3 style="font-size:22px;letter-spacing:-0.03em;">This week is still open.</h3>
+        <div class="section-sub" style="margin:8px 0 16px;">Log what you finished, what slipped, and what is worth turning into essay material.</div>
+        <a href="/weekly" class="btn btn-primary">Start weekly check-in</a>
+      {% endif %}
+    </div>
+    <div class="card" style="background:linear-gradient(135deg, #0f172a, #172554);color:#fff;">
+      <div class="muted" style="color:rgba(255,255,255,0.62);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px;">Core narrative</div>
+      <div style="font-size:17px;line-height:1.7;letter-spacing:-0.02em;">
+        "I use music as a vehicle for leadership, advocacy, and access, and I build the tools and communities to make that possible for others."
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}

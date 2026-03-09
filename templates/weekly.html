@@ -1,82 +1,92 @@
 {% extends "base.html" %}
 {% block title %}Weekly Check-in — College Prep Tracker{% endblock %}
 {% block content %}
-<h1 class="section-title">📝 Weekly Check-in</h1>
-<div class="section-sub">{{ cur_week }} · Mark tasks done, skip what you missed, add notes for your essay bank</div>
+<div class="page-header">
+  <div>
+    <div class="eyebrow">Weekly check-in</div>
+    <h1 class="section-title" style="margin-top:14px;">Capture the wins while they are still fresh.</h1>
+    <div class="section-sub">{{ cur_week }} · Mark what shipped, note what slipped, and save detail you can reuse later in essays and applications.</div>
+  </div>
+</div>
 
 {% if has_existing %}
-<div style="padding:8px 14px;background:#DEF7EC;border-radius:8px;font-size:13px;color:#03543F;margin-bottom:12px;">
-  ✅ You already logged this week. Editing will update your existing entry.
+<div class="card" style="background:#f0fdf4;border-color:rgba(16,185,129,0.14);">
+  <div class="eyebrow" style="background:rgba(16,185,129,0.12);color:#047857;border-color:transparent;">Already logged</div>
+  <div style="font-size:14px;color:#065f46;margin-top:10px;">You already saved this week. Any edits here will update the current entry.</div>
 </div>
 {% endif %}
 
 {% for p in pillars %}
-<div class="card" style="border-left:4px solid {{ p.color }};">
+<div class="card">
   <div class="collapsible-header" onclick="toggleSection('sect-{{ p.id }}', this)">
-    <h3 style="margin:0;">{{ p.icon }} {{ p.label }}</h3>
+    <div>
+      <div class="eyebrow" style="background:{{ p.color }}12;color:{{ p.color }};border-color:transparent;margin-bottom:10px;">{{ p.icon }} {{ p.label }}</div>
+      <h3 style="margin:0;font-size:24px;letter-spacing:-0.03em;">{{ p.label }}</h3>
+    </div>
     <span class="chevron" style="font-size:18px;transition:transform 0.2s;">▾</span>
   </div>
-  <div id="sect-{{ p.id }}" class="section-body" style="margin-top:10px;">
+  <div id="sect-{{ p.id }}" class="section-body" style="margin-top:16px;">
     {% for t in tasks[p.id] %}
     <div class="task-item" id="task-{{ p.id }}-{{ loop.index0 }}" data-pillar="{{ p.id }}" data-label="{{ t.label }}">
       <div class="task-label">
         {{ t.label }}
-        {% if t.custom %}<span class="badge" style="background:#E0E7FF;color:#3730A3;">custom</span>{% endif %}
+        {% if t.custom %}<span class="badge" style="background:#e0e7ff;color:#3730a3;">custom</span>{% endif %}
       </div>
       <div class="task-actions">
         <button class="btn btn-sm {% if t.status == 'done' %}btn-done{% endif %}"
-                onclick="setStatus(this, '{{ p.id }}', {{ loop.index0 }}, 'done')">✅ Done</button>
+                onclick="setStatus(this, '{{ p.id }}', {{ loop.index0 }}, 'done')">Done</button>
         <button class="btn btn-sm {% if t.status == 'skipped' %}btn-skip{% endif %}"
-                onclick="setStatus(this, '{{ p.id }}', {{ loop.index0 }}, 'skipped')">⏭ Couldn't do</button>
-        <input type="text" placeholder="Quick note (feeds your essay bank)..."
+                onclick="setStatus(this, '{{ p.id }}', {{ loop.index0 }}, 'skipped')">Skipped</button>
+        <input type="text" placeholder="Quick note for your essay bank..."
                value="{{ t.note }}" class="task-note"
-               style="flex:1;min-width:150px;font-size:12px;padding:5px 8px;"
+               style="flex:1;min-width:220px;"
                data-pillar="{{ p.id }}" data-idx="{{ loop.index0 }}">
       </div>
     </div>
     {% endfor %}
-    <!-- Add custom task -->
-    <div style="display:flex;gap:6px;margin-top:8px;">
-      <input type="text" placeholder="Add a custom task..." id="custom-{{ p.id }}" style="flex:1;font-size:12px;padding:5px 8px;">
-      <button class="btn btn-sm" onclick="addCustom('{{ p.id }}')">+ Add</button>
+    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+      <input type="text" placeholder="Add a custom task..." id="custom-{{ p.id }}" style="flex:1;min-width:220px;">
+      <button class="btn btn-sm" onclick="addCustom('{{ p.id }}')">Add task</button>
     </div>
   </div>
 </div>
 {% endfor %}
 
-<!-- Weekly Reflection -->
-<div class="card">
-  <h3>🪞 Weekly Reflection</h3>
-  <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">How did this week feel? What's your #1 priority next week? (Optional but great for essays)</div>
-  <textarea id="reflection" placeholder="This week I..." rows="3"></textarea>
-</div>
-
-<!-- Save Button -->
-<div style="text-align:center;margin:16px 0;">
-  <button class="btn btn-primary" onclick="saveWeekly()" style="padding:12px 40px;font-size:15px;font-weight:700;">
-    💾 Save Weekly Check-in
-  </button>
-</div>
-
-<!-- Past Weeks -->
-{% if past_logs %}
-<div style="margin-top:24px;">
-  <div class="section-title" style="font-size:16px;">📅 Past Weeks</div>
-  <div class="section-sub">Your check-in history</div>
-  {% for l in past_logs %}
-  <div class="card" style="padding:10px 14px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;">
-      <span style="font-weight:600;font-size:14px;">{{ l.week }}</span>
-      <span>
-        <span style="color:var(--green);font-weight:700;">{{ l.done }}</span>
-        <span style="color:var(--muted);font-size:13px;">/ {{ l.total }} tasks</span>
-      </span>
-    </div>
-    {% if l.reflection %}
-    <div style="font-size:12px;color:var(--muted);margin-top:4px;font-style:italic;">{{ l.reflection[:120] }}{% if l.reflection|length > 120 %}...{% endif %}</div>
-    {% endif %}
+<div class="grid-2">
+  <div class="card">
+    <div class="eyebrow" style="margin-bottom:12px;">Weekly reflection</div>
+    <h3 style="font-size:24px;letter-spacing:-0.03em;">What mattered most this week?</h3>
+    <div style="font-size:13px;color:var(--muted);margin:8px 0 12px;">What felt strong, what felt stuck, and what deserves focus next week?</div>
+    <textarea id="reflection" placeholder="This week I..." rows="4"></textarea>
   </div>
-  {% endfor %}
+  <div class="card" style="background:linear-gradient(135deg, rgba(22,82,240,0.08), rgba(255,255,255,0.92));">
+    <div class="eyebrow" style="margin-bottom:12px;">Why this matters</div>
+    <h3 style="font-size:24px;letter-spacing:-0.03em;">This is raw material for future essays.</h3>
+    <div class="section-sub" style="margin:8px 0 18px;">Specific examples, numbers, and reflection are much more valuable than vague memory six months from now.</div>
+    <button class="btn btn-primary" onclick="saveWeekly()">Save weekly check-in</button>
+  </div>
+</div>
+
+{% if past_logs %}
+<div class="page-block" style="margin-top:24px;">
+  <div class="section-title" style="font-size:28px;">Past weeks</div>
+  <div class="section-sub">A quick view of your recent check-in history.</div>
+  <div class="grid-2">
+    {% for l in past_logs %}
+    <div class="card" style="margin-bottom:0;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+        <span style="font-weight:700;font-size:14px;">{{ l.week }}</span>
+        <span>
+          <span style="color:var(--green);font-weight:800;">{{ l.done }}</span>
+          <span style="color:var(--muted);font-size:13px;">/ {{ l.total }} tasks</span>
+        </span>
+      </div>
+      {% if l.reflection %}
+      <div style="font-size:12px;color:var(--muted);margin-top:8px;font-style:italic;">{{ l.reflection[:120] }}{% if l.reflection|length > 120 %}...{% endif %}</div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
 </div>
 {% endif %}
 {% endblock %}
