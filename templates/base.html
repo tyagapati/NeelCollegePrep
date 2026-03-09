@@ -198,6 +198,7 @@
     .btn-sm { padding: 7px 11px; font-size: 11px; }
     .btn-done { background: #ecfdf5; color: #047857; border-color: rgba(16,185,129,0.18); }
     .btn-skip { background: #fffbeb; color: #b45309; border-color: rgba(245,158,11,0.22); }
+    .btn-closed { background: #eef2f7; color: #475569; border-color: rgba(148,163,184,0.24); }
     .badge {
       display: inline-flex;
       align-items: center;
@@ -254,6 +255,12 @@
     }
     .task-label { font-size: 13px; font-weight: 500; margin-bottom: 8px; color: var(--text-soft); }
     .task-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .task-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+    }
     .nudge {
       padding: 14px 16px;
       border-radius: 16px;
@@ -431,6 +438,7 @@
       .metric-row { grid-template-columns: 1fr; }
       .metric-val { text-align: left; }
       .top-nav-inner { padding: 10px 12px; }
+      .task-grid { grid-template-columns: 1fr; }
     }
     @media (max-width: 640px) {
       body { padding-bottom: 102px; }

@@ -209,6 +209,11 @@ def get_metric_val(db, metric_id):
     r = db.execute("SELECT current_value FROM metrics WHERE id=?", (metric_id,)).fetchone()
     return r["current_value"] if r else 0
 
+def normalize_task_status(status):
+    if status == "skipped":
+        return "not_done"
+    return status or "pending"
+
 def metric_progress(db, metric_id):
     metric = METRIC_LOOKUP[metric_id]
     return pct(get_metric_val(db, metric_id), metric["target"])
@@ -264,9 +269,13 @@ def pillar_attention_score(db, pid):
     )
     activity = recent_activity_score(db, pid)
     activity_gap = 35 if activity is None else (100 - activity)
-    return round(progress_gap + weak_metric_count * 6 + activity_gap * 0.35, 2)
+    carryover_gap = open_carryover_count(db, pid) * 18
+    return round(progress_gap + weak_metric_count * 6 + activity_gap * 0.35 + carryover_gap, 2)
 
 def focus_reason(db, pid):
+    carryover_count = open_carryover_count(db, pid)
+    if carryover_count:
+        return f"{carryover_count} task{'s' if carryover_count != 1 else ''} still open from earlier weeks"
     activity = recent_activity_score(db, pid)
     if activity is not None and activity < 45:
         return "Needs more weekly consistency"
@@ -288,25 +297,148 @@ def format_effect(effect):
     prefix = "+" if effect["amount"] > 0 else ""
     return f"{metric['label']} {prefix}{amount}"
 
+def latest_task_records(db, exclude_week_id=None, limit=12):
+    rows = db.execute(
+        "SELECT week_id, data FROM weekly_logs ORDER BY week_id DESC LIMIT ?",
+        (limit,)
+    ).fetchall()
+    latest = {}
+    for row in rows:
+        if exclude_week_id and row["week_id"] == exclude_week_id:
+            continue
+        data = json.loads(row["data"])
+        for task in data.get("tasks", []):
+            key = task_match_key(task)
+            if key not in latest:
+                latest[key] = {**task, "status": normalize_task_status(task.get("status")), "week_id": row["week_id"]}
+    return latest
+
+def latest_closed_task_ids(db, exclude_week_id=None):
+    latest = latest_task_records(db, exclude_week_id=exclude_week_id)
+    return {
+        task.get("task_id")
+        for task in latest.values()
+        if task.get("task_id") and task.get("status") == "closed"
+    }
+
+def build_task_payload(task_id, pillar_id, label, why, effects=None, custom=False, carryover=False, carryover_week=None):
+    effects = effects or []
+    pillar = PILLAR_LOOKUP[pillar_id]
+    return {
+        "task_id": task_id,
+        "pillar": pillar_id,
+        "pillar_label": pillar["label"],
+        "pillar_icon": pillar["icon"],
+        "pillar_color": pillar["color"],
+        "label": label,
+        "why": why,
+        "effects": effects,
+        "effect_text": ", ".join(format_effect(effect) for effect in effects),
+        "custom": custom,
+        "carryover": carryover,
+        "carryover_week": carryover_week,
+    }
+
+def get_carryover_tasks(db, week_id):
+    latest = latest_task_records(db, exclude_week_id=week_id)
+    carryovers = []
+    for task in latest.values():
+        if task.get("status") != "not_done":
+            continue
+        task_id = task.get("task_id")
+        if task_id in TASK_LOOKUP:
+            lib_task = TASK_LOOKUP[task_id]
+            carryovers.append(build_task_payload(
+                task_id=task_id,
+                pillar_id=lib_task["pillar"],
+                label=lib_task["label"],
+                why=task.get("note") or lib_task["why"],
+                effects=lib_task.get("effects", []),
+                carryover=True,
+                carryover_week=task.get("week_id"),
+            ))
+        elif task_id and task_id.startswith("custom."):
+            custom_id = task_id.split(".", 1)[1]
+            row = db.execute(
+                "SELECT id, pillar, label, active FROM custom_tasks WHERE id=?",
+                (custom_id,)
+            ).fetchone()
+            if row and row["active"]:
+                carryovers.append(build_task_payload(
+                    task_id=task_id,
+                    pillar_id=row["pillar"],
+                    label=row["label"],
+                    why=task.get("note") or "Carry this forward until it is done or closed.",
+                    effects=[],
+                    custom=True,
+                    carryover=True,
+                    carryover_week=task.get("week_id"),
+                ))
+    return carryovers
+
+def open_carryover_count(db, pid, week_id=None):
+    return sum(1 for task in get_carryover_tasks(db, week_id or get_week_id()) if task["pillar"] == pid)
+
+def group_weekly_tasks(focus_pillars, focus_tasks, custom_tasks):
+    task_groups = {}
+    for task in focus_tasks + custom_tasks:
+        if task.get("status") == "closed":
+            continue
+        task_groups.setdefault(task["pillar"], []).append(task)
+
+    ordered_ids = []
+    for pillar in focus_pillars:
+        if pillar["id"] not in ordered_ids:
+            ordered_ids.append(pillar["id"])
+    for pid in task_groups:
+        if pid not in ordered_ids:
+            ordered_ids.append(pid)
+
+    sections = []
+    focus_lookup = {pillar["id"]: pillar for pillar in focus_pillars}
+    for pid in ordered_ids:
+        items = task_groups.get(pid, [])
+        if not items:
+            continue
+        items.sort(key=lambda task: (
+            0 if task.get("carryover") else 1,
+            0 if not task.get("custom") else 1,
+            task["label"].lower(),
+        ))
+        pillar = PILLAR_LOOKUP[pid]
+        sections.append({
+            "id": pid,
+            "label": pillar["label"],
+            "icon": pillar["icon"],
+            "color": pillar["color"],
+            "reason": focus_lookup.get(pid, {}).get("reason", ""),
+            "tasks": items,
+        })
+    return sections
+
 def generate_weekly_plan(db, week_id):
+    carryover_tasks = get_carryover_tasks(db, week_id)
+    closed_task_ids = latest_closed_task_ids(db, exclude_week_id=week_id)
     focus_pillars = sorted(PILLARS, key=lambda p: pillar_attention_score(db, p["id"]), reverse=True)[:3]
     task_slots = [2, 2, 1]
     tasks = []
     for pillar, slots in zip(focus_pillars, task_slots):
-        ranked_tasks = rank_tasks_for_pillar(db, pillar["id"])[:slots]
+        pillar_carryovers = [task for task in carryover_tasks if task["pillar"] == pillar["id"]][:2]
+        tasks.extend(pillar_carryovers)
+        excluded_ids = {task["task_id"] for task in pillar_carryovers} | closed_task_ids
+        ranked_tasks = [
+            task for task in rank_tasks_for_pillar(db, pillar["id"])
+            if f"{pillar['id']}.{task['id']}" not in excluded_ids
+        ][:max(0, slots - len(pillar_carryovers))]
         for task in ranked_tasks:
             task_id = f"{pillar['id']}.{task['id']}"
-            tasks.append({
-                "task_id": task_id,
-                "pillar": pillar["id"],
-                "pillar_label": pillar["label"],
-                "pillar_icon": pillar["icon"],
-                "pillar_color": pillar["color"],
-                "label": task["label"],
-                "why": task["why"],
-                "effects": task.get("effects", []),
-                "effect_text": ", ".join(format_effect(effect) for effect in task.get("effects", [])),
-            })
+            tasks.append(build_task_payload(
+                task_id=task_id,
+                pillar_id=pillar["id"],
+                label=task["label"],
+                why=task["why"],
+                effects=task.get("effects", []),
+            ))
     return {
         "week_id": week_id,
         "week_starts": get_week_start().date().isoformat(),
@@ -319,6 +451,7 @@ def generate_weekly_plan(db, week_id):
                 "icon": pillar["icon"],
                 "color": pillar["color"],
                 "reason": focus_reason(db, pillar["id"]),
+                "carryover_count": open_carryover_count(db, pillar["id"], week_id),
             }
             for pillar in focus_pillars
         ],
@@ -348,7 +481,7 @@ def merge_status(plan_task, saved_tasks):
         if task.get("task_id") == plan_task.get("task_id") or (
             task.get("pillar") == plan_task.get("pillar") and task.get("label") == plan_task.get("label")
         ):
-            status = task.get("status", "pending")
+            status = normalize_task_status(task.get("status"))
             note = task.get("note", "")
             break
     return {
@@ -427,6 +560,13 @@ def maybe_add_essay_notes(db, tasks, recorded_at):
                     (angle["id"], pillar, task["note"], task.get("label", ""), recorded_at)
                 )
 
+def sync_custom_task_closures(db, tasks):
+    for task in tasks:
+        task_id = task.get("task_id", "")
+        if task_id.startswith("custom.") and task.get("status") == "closed":
+            custom_id = task_id.split(".", 1)[1]
+            db.execute("UPDATE custom_tasks SET active=0 WHERE id=?", (custom_id,))
+
 def generate_nudges(db):
     nudges = []
     for p in PILLARS:
@@ -498,11 +638,21 @@ def dashboard():
         pillar_data.append({**p, "progress": prog, "metrics": metrics_list})
     nudges = generate_nudges(db)
     cur_week = get_week_id()
-    has_log = db.execute("SELECT 1 FROM weekly_logs WHERE week_id=?", (cur_week,)).fetchone()
+    log_row = db.execute("SELECT data FROM weekly_logs WHERE week_id=?", (cur_week,)).fetchone()
+    saved_tasks = json.loads(log_row["data"]).get("tasks", []) if log_row else []
+    visible_plan_tasks = [merge_status(task, saved_tasks) for task in weekly_plan.get("tasks", [])]
+    attention_tasks = [
+        task for task in visible_plan_tasks
+        if task.get("status") not in {"done", "closed"} and task.get("carryover")
+    ] or [
+        task for task in visible_plan_tasks
+        if task.get("status") not in {"done", "closed"}
+    ]
     return render_template("dashboard.html",
         momentum=mom, pillars=pillar_data, nudges=nudges,
-        cur_week=cur_week, has_log=bool(has_log), essays=ESSAY_ANGLES,
-        weekly_plan=weekly_plan, reset_label=week_reset_label())
+        cur_week=cur_week, has_log=bool(log_row), essays=ESSAY_ANGLES,
+        weekly_plan=weekly_plan, reset_label=week_reset_label(),
+        attention_tasks=attention_tasks[:4])
 
 @app.route("/pillars")
 @app.route("/pillars/<pillar_id>")
@@ -546,6 +696,7 @@ def weekly():
     saved_tasks = existing_data.get("tasks", []) if existing_data else []
     focus_tasks = [merge_status(task, saved_tasks) for task in weekly_plan.get("tasks", [])]
     custom_tasks = load_custom_tasks(db, saved_tasks)
+    grouped_tasks = group_weekly_tasks(weekly_plan.get("focus_pillars", []), focus_tasks, custom_tasks)
     past_logs = db.execute("SELECT week_id, data FROM weekly_logs ORDER BY logged_at DESC LIMIT 8").fetchall()
     past = []
     for l in past_logs:
@@ -561,6 +712,7 @@ def weekly():
         weekly_plan=weekly_plan,
         focus_tasks=focus_tasks,
         custom_tasks=custom_tasks,
+        grouped_tasks=grouped_tasks,
         reset_label=week_reset_label(),
         reflection=(existing_data or {}).get("reflection", "")
     )
@@ -574,6 +726,7 @@ def save_weekly():
     existing = db.execute("SELECT data FROM weekly_logs WHERE week_id=?", (wid,)).fetchone()
     old_data = json.loads(existing["data"]) if existing else {"tasks": [], "reflection": ""}
     apply_task_effects(db, wid, old_data.get("tasks", []), data.get("tasks", []), now)
+    sync_custom_task_closures(db, data.get("tasks", []))
     payload = json.dumps(data)
     if existing:
         db.execute("UPDATE weekly_logs SET data=?, logged_at=? WHERE week_id=?", (payload, now, wid))
