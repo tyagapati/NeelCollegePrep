@@ -24,12 +24,12 @@
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:10px;flex-wrap:wrap;">
       <div>
         <div class="eyebrow" style="background:{{ p.color }}12;color:{{ p.color }};border-color:transparent;margin-bottom:12px;">{{ p.icon }} {{ p.label }}</div>
-        <h3 style="margin:0 0 4px;font-size:28px;letter-spacing:-0.04em;">{{ p.label }}</h3>
-        <div style="font-size:14px;color:var(--muted);">{{ p.desc }}</div>
+        <h3 style="margin:0 0 4px;font-size:22px;font-weight:700;letter-spacing:-0.03em;">{{ p.label }}</h3>
+        <div style="font-size:13px;color:var(--muted);">{{ p.desc }}</div>
       </div>
       <div class="surface-note right" style="min-width:150px;">
-        <strong style="font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">Progress</strong>
-        <div style="font-size:34px;font-weight:800;letter-spacing:-0.04em;color:{{ p.color }};">{{ p.progress }}%</div>
+        <strong style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;">Progress</strong>
+        <div style="font-size:28px;font-weight:700;letter-spacing:-0.03em;color:{{ p.color }};">{{ p.progress }}%</div>
       </div>
     </div>
     <div class="bar-bg" style="height:12px;margin-bottom:18px;">
@@ -62,7 +62,7 @@
 
     {% if p.metrics[0].history|length > 1 %}
     <div style="margin-top:20px;padding-top:18px;border-top:1px solid var(--border);">
-      <div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.05em;">Recent history · {{ p.metrics[0].label }}</div>
+      <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.08em;">Recent history · {{ p.metrics[0].label }}</div>
       <div style="display:flex;align-items:flex-end;gap:4px;height:60px;">
         {% set max_v = p.metrics[0].history|map(attribute='v')|max %}
         {% for h in p.metrics[0].history %}
@@ -83,7 +83,7 @@
 <div id="editModal" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(15,23,42,0.35);align-items:center;justify-content:center;padding:20px;">
   <div class="card" style="background:#fff;max-width:420px;width:100%;margin-bottom:0;">
     <div class="eyebrow" style="margin-bottom:14px;">Edit metric</div>
-    <h3 id="editTitle" style="margin-bottom:14px;font-size:24px;letter-spacing:-0.03em;"></h3>
+    <h3 id="editTitle" style="margin-bottom:14px;font-size:20px;font-weight:700;letter-spacing:-0.02em;"></h3>
     <div id="editNumberField">
       <label style="font-size:13px;color:var(--muted);display:block;margin-bottom:6px;">New value:</label>
       <input type="number" id="editValue" min="0" step="1" style="font-size:18px;font-weight:700;">

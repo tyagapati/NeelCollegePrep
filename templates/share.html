@@ -5,7 +5,7 @@
   <div class="page-header">
     <div>
       <div class="eyebrow">Share progress</div>
-      <h1 class="section-title" style="margin-top:14px;">A cleaner report for counselors, mentors, and family.</h1>
+      <h1 class="section-title" style="margin-top:12px;">A cleaner report for counselors, mentors, and family.</h1>
       <div class="section-sub">Use this print-friendly view to export a polished snapshot of current progress.</div>
     </div>
     <button class="btn btn-primary" onclick="window.print()">Print or save PDF</button>
@@ -15,11 +15,11 @@
 
 <div class="share-page">
   <div style="text-align:center;margin-bottom:24px;">
-    <h1 style="font-size:30px;font-weight:800;margin:0;letter-spacing:-0.04em;">College Prep Progress Report</h1>
+    <h1 style="font-size:26px;font-weight:700;margin:0;letter-spacing:-0.03em;">College Prep Progress Report</h1>
     <div style="font-size:13px;color:var(--muted);">Generated {{ generated }} · Target: Top 25 · Pre-Law / PoliSci · Fall 2027</div>
     <div style="margin-top:12px;">
       <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;">Momentum score</div>
-      <div style="font-size:48px;font-weight:800;color:{% if momentum >= 60 %}var(--green){% elif momentum >= 30 %}var(--amber){% else %}var(--red){% endif %};">
+      <div style="font-size:42px;font-weight:700;color:{% if momentum >= 60 %}var(--green){% elif momentum >= 30 %}var(--amber){% else %}var(--red){% endif %};">
         {{ momentum }}<span style="font-size:20px;color:var(--muted);">/100</span>
       </div>
     </div>

@@ -21,7 +21,7 @@
   <div class="collapsible-header" onclick="toggleSection('sect-{{ p.id }}', this)">
     <div>
       <div class="eyebrow" style="background:{{ p.color }}12;color:{{ p.color }};border-color:transparent;margin-bottom:10px;">{{ p.icon }} {{ p.label }}</div>
-      <h3 style="margin:0;font-size:24px;letter-spacing:-0.03em;">{{ p.label }}</h3>
+      <h3 style="margin:0;font-size:20px;font-weight:700;letter-spacing:-0.02em;">{{ p.label }}</h3>
     </div>
     <span class="chevron" style="font-size:18px;transition:transform 0.2s;">▾</span>
   </div>
@@ -55,13 +55,13 @@
 <div class="grid-2">
   <div class="card">
     <div class="eyebrow" style="margin-bottom:12px;">Weekly reflection</div>
-    <h3 style="font-size:24px;letter-spacing:-0.03em;">What mattered most this week?</h3>
+    <h3 style="font-size:20px;font-weight:700;letter-spacing:-0.02em;">What mattered most this week?</h3>
     <div style="font-size:13px;color:var(--muted);margin:8px 0 12px;">What felt strong, what felt stuck, and what deserves focus next week?</div>
     <textarea id="reflection" placeholder="This week I..." rows="4"></textarea>
   </div>
   <div class="card" style="background:linear-gradient(135deg, rgba(22,82,240,0.08), rgba(255,255,255,0.92));">
     <div class="eyebrow" style="margin-bottom:12px;">Why this matters</div>
-    <h3 style="font-size:24px;letter-spacing:-0.03em;">This is raw material for future essays.</h3>
+    <h3 style="font-size:20px;font-weight:700;letter-spacing:-0.02em;">This is raw material for future essays.</h3>
     <div class="section-sub" style="margin:8px 0 18px;">Specific examples, numbers, and reflection are much more valuable than vague memory six months from now.</div>
     <button class="btn btn-primary" onclick="saveWeekly()">Save weekly check-in</button>
   </div>
@@ -69,7 +69,7 @@
 
 {% if past_logs %}
 <div class="page-block" style="margin-top:24px;">
-  <div class="section-title" style="font-size:28px;">Past weeks</div>
+  <div class="section-title" style="font-size:24px;">Past weeks</div>
   <div class="section-sub">A quick view of your recent check-in history.</div>
   <div class="grid-2">
     {% for l in past_logs %}
