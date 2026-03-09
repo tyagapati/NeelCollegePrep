@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+.Python
+.venv/
+venv/
+env/
+ENV/
+.pytest_cache/
+tracker.db
+.env

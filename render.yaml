@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: neelcollegeprep
+    runtime: python
+    plan: free
+    branch: main
+    autoDeploy: true
+    healthCheckPath: /
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
